@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        // Hardcoded admin for initial setup - allowing without verified check for bootstrap phase
+        request.auth.token.email == 'adminplaypro@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validations
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 100 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.isAdmin is bool &&
+             data.selectedToyIds is list;
+    }
+
+    function isValidToy(data) {
+      return data.name is string && data.name.size() <= 200 &&
+             data.image is string && data.image.size() <= 1000 &&
+             data.ageRange is string &&
+             data.category is string &&
+             data.shortDescription is string &&
+             data.fullDescription is string &&
+             data.brand is string &&
+             data.available is bool;
+    }
+
+    function isValidOrder(data) {
+      return data.userId is string &&
+             data.toyIds is list &&
+             data.status in ['pending', 'delivered', 'swapped'] &&
+             data.shippingAddress is string &&
+             data.createdAt is timestamp;
+    }
+
+    // Collections
+    match /test/connection {
+      allow read: if true;
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidOrder(incoming());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(incoming()) && (incoming().isAdmin == false || incoming().email == 'adminplaypro@gmail.com');
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
+        // User updating their own profile (cannot change isAdmin unless they are the bootstrap admin)
+        (isOwner(userId) && (incoming().isAdmin == existing().isAdmin || isAdmin())) ||
+        // Admin update
+        isAdmin()
+      );
+    }
+
+    match /toys/{toyId} {
+      allow read: if true; // Publicly viewable
+      allow create: if isAdmin() && isValidToy(incoming());
+      allow update: if isAdmin() && isValidToy(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{userId} {
+      allow read: if isSignedIn(); // Users can check if they are admin
+      allow write: if false; // Only manageable via console for safety
+    }
+  }
+}
