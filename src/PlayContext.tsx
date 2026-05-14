@@ -298,14 +298,11 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async () => {
     try {
       await signInWithGoogle();
+      console.log("Login sequence initiated...");
     } catch (err: any) {
-      if (err.code === 'auth/configuration-not-found') {
-        throw new Error("Google Sign-In is not enabled for this project yet.");
-      }
-      if (err.code === 'auth/popup-blocked') {
-        throw new Error("Login popup was blocked.");
-      }
-      throw err;
+      console.error("PlayContext Login Error:", err);
+      // Propagate the specific message from helper or a default one
+      throw new Error(err.message || "Google Sign-In failed. Please try again.");
     }
   };
 

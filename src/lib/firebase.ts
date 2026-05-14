@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import firebaseConfig from "../../firebase-applet-config.json";
@@ -11,12 +11,25 @@ export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Standardize Google Sign-In with direct popup usage
 export async function signInWithGoogle() {
   try {
-    const result = await (await import("firebase/auth")).signInWithPopup(auth, googleProvider);
+    // Force prompt to ensure user can switch accounts if needed
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
     console.error("Firebase Sign-in Error:", error.code, error.message);
+    
+    // Explicitly handle common popup errors
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error("Login popup was blocked by your browser. Please allow popups for this site.");
+    } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+      throw new Error("Login was cancelled.");
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error("This domain is not authorized for Google Sign-In. Please add the current URL to your Firebase Console authorized domains.");
+    }
+    
     throw error;
   }
 }
