@@ -87,17 +87,24 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     async function testConnection() {
       try {
-        const testSnap = await getDoc(doc(db, 'test', 'connection'));
+        // Use getDoc instead of getDocFromServer for a smoother experience
+        // Even if the document doesn't exist, as long as it doesn't throw a connection error, we're good
+        await getDoc(doc(db, 'test', 'connection'));
         setDbStatus('connected');
-        console.log("🔥 Connected to Firebase");
+        console.log("🔥 Firebase: Connected");
       } catch (error: any) {
-        // Even if test doc read fails, we might still be connected
-        // We only set disconnected if it's clearly a network/config error
-        if (error.message?.includes('failed-precondition') || error.message?.includes('permission-denied')) {
-          setDbStatus('connected'); // Permission denied means we ARE connected, just can't read test doc
+        console.warn("⚠️ Firebase: Connection check failed:", error.code, error.message);
+        
+        // These codes mean we are connected, but permissions or other factors blocked the specific read
+        if (error.code === 'permission-denied' || error.code === 'not-found' || error.code === 'failed-precondition') {
+          setDbStatus('connected');
+        } else if (error.message?.includes('offline')) {
+          // If offline, we might be in a restricted environment (like an iframe)
+          // We'll fallback to connected but log it
+          console.log("ℹ️ Firebase: Operating in offline mode");
+          setDbStatus('connected');
         } else {
-          console.log("⚠️ Connection test inconclusive, but proceeding...");
-          setDbStatus('connected'); // Let's default to connected and let operations fail if they must
+          setDbStatus('disconnected');
         }
       }
     }
@@ -120,10 +127,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'admin@playpro.com',
             'shivadevweb@gmail.com' // Developer admin
           ];
-          let isAdmin = adminEmails.includes(firebaseUser.email || '');
-          
-          // Also check for the manual admin id if they logged in that way
-          // But here we are in Firebase auth listener, so we check for real admins
+          let isAdmin = adminEmails.includes(firebaseUser.email?.toLowerCase() || '');
           
           // 2. Initial profile check/creation
           let profileSnap;
@@ -134,7 +138,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           const profileData = {
-            email: firebaseUser.email || '',
+            email: firebaseUser.email?.toLowerCase() || '',
             name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
             photoURL: firebaseUser.photoURL || '',
             isAdmin: isAdmin,
@@ -153,7 +157,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.error("Profile creation failed", e);
             }
           } else {
-            // Check if we need to sync admin status or other fields
+            // Check if we need to sync admin status
             const existingData = profileSnap.data();
             if (existingData?.isAdmin !== isAdmin) {
               console.log("Syncing admin status for existing profile...");
@@ -315,8 +319,14 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      console.error("Google sign-in failed", err);
-      throw err; // Re-throw so UI can handle it
+      if (err.code === 'auth/configuration-not-found') {
+        throw new Error("Google Sign-In is not enabled for this project yet. Please ask the developer to enable it in the Firebase Console.");
+      }
+      if (err.code === 'auth/popup-blocked') {
+        throw new Error("Login popup was blocked. Please allow popups for this site and try again.");
+      }
+      console.error("Google sign-in error", err);
+      throw err;
     }
   };
 
@@ -443,8 +453,14 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const seedDatabase = async () => {
     if (!user?.isAdmin) return;
-    const { TOYS } = await import('./data/mockData');
-    for (const toy of TOYS) {
+    const { TOYS: mockToys } = await import('./data/mockData');
+    
+    // Clear current local toys if we're connected to show a fresh sync
+    if (dbStatus === 'connected') {
+      setToys([]);
+    }
+
+    for (const toy of mockToys) {
       await addToy(toy);
     }
   };
@@ -479,31 +495,33 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addToy = async (toy: Partial<Toy>) => {
+    const id = Math.random().toString(36).substr(2, 9);
     const newToyData = {
       ...toy,
+      id: id,
       available: toy.available ?? true,
       createdAt: new Date().toISOString()
-    };
+    } as Toy;
+
+    // Optimistic Update
+    setToys(prev => [newToyData, ...prev]);
 
     try {
-      // Always try Firestore first if not explicitly disconnected
       if (dbStatus === 'connected') {
-        const docRef = await addDoc(collection(db, 'toys'), newToyData);
-        console.log("Toy added to Firestore:", docRef.id);
+        const { id: _, ...dataToSave } = newToyData; // Don't save ID in doc body twice if ID is doc name
+        await setDoc(doc(db, 'toys', id), dataToSave);
+        console.log("Toy saved to Firestore:", id);
         return;
       }
-      throw new Error("Disconnected");
     } catch (error) {
-      console.warn("Firestore add failed, updating local state:", error);
-      const newToy = { 
-        ...newToyData, 
-        id: Math.random().toString(36).substr(2, 9) 
-      } as Toy;
-      setToys(prev => [newToy, ...prev]);
+      console.warn("Firestore add failed, kept local state:", error);
     }
   };
 
   const updateToy = async (toy: Toy) => {
+    // Optimistic Update
+    setToys(prev => prev.map(t => t.id === toy.id ? toy : t));
+
     const { id, ...data } = toy;
     const toyRef = doc(db, 'toys', id);
     try {
@@ -512,14 +530,15 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Toy updated in Firestore:", id);
         return;
       }
-      throw new Error("Disconnected");
     } catch (error) {
-      console.warn("Firestore update failed, updating local state:", error);
-      setToys(prev => prev.map(t => t.id === toy.id ? toy : t));
+      console.warn("Firestore update failed, kept local state:", error);
     }
   };
 
   const deleteToy = async (id: string) => {
+    // Optimistic Update
+    setToys(prev => prev.filter(t => t.id !== id));
+
     const toyRef = doc(db, 'toys', id);
     try {
       if (dbStatus === 'connected') {
@@ -527,10 +546,8 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Toy deleted from Firestore:", id);
         return;
       }
-      throw new Error("Disconnected");
     } catch (error) {
-      console.warn("Firestore delete failed, updating local state:", error);
-      setToys(prev => prev.filter(t => t.id !== id));
+      console.warn("Firestore delete failed, kept local state:", error);
     }
   };
 
