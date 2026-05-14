@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, MessageCircle, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const ContactPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -12,135 +13,166 @@ export const ContactPage = () => {
   };
 
   return (
-    <div className="bg-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Get in <span className="text-indigo-600">Touch</span></h1>
-          <p className="mt-4 text-gray-600 text-lg max-w-2xl mx-auto">
-            Have questions about our rental plans or sanitization process? Our team is here to help you 24/7.
-          </p>
+    <div className="bg-canvas min-h-screen pt-32 pb-24">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header Section */}
+        <div className="text-center mb-24 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-3xl mx-auto"
+          >
+            <span className="inline-flex items-center space-x-2 bg-dark/5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-dark/40 mb-8">
+              <Sparkles size={14} className="text-secondary" />
+              <span>We're here to help</span>
+            </span>
+            <h1 className="text-6xl md:text-8xl font-black text-dark tracking-tighter leading-[0.9] mb-8">
+              Get in <span className="text-secondary italic">Touch.</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-dark/40 font-medium leading-relaxed">
+              Have questions about our rental plans or sanitization process? Our team is here for you 24/7.
+            </p>
+          </motion.div>
+          
+          {/* Decorative Blobs */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary/10 rounded-full blur-[100px] -z-10" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Contact Info */}
-          <div className="lg:col-span-1 space-y-8">
-            <div className="bg-indigo-50 p-8 rounded-3xl">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">Contact Information</h2>
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm text-indigo-600">
-                    <Mail size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Email Us</p>
-                    <p className="text-gray-900 font-medium">support@playpro.com</p>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          {/* Contact Cards */}
+          <div className="lg:col-span-4 space-y-8">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-dark text-white p-12 rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/20 blur-[60px] rounded-full" />
+              
+              <h2 className="text-3xl font-black mb-10 tracking-tight relative z-10">Direct Contact</h2>
+              
+              <div className="space-y-10 relative z-10">
+                <div className="group">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Email Support</p>
+                  <p className="text-xl font-bold group-hover:text-secondary transition-colors">support@playpro.com</p>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm text-indigo-600">
-                    <Phone size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Call Us</p>
-                    <p className="text-gray-900 font-medium">+91 98765 43210</p>
-                  </div>
+                
+                <div className="group">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Call Center</p>
+                  <p className="text-xl font-bold group-hover:text-secondary transition-colors">+91 98765 43210</p>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-white p-3 rounded-xl shadow-sm text-indigo-600">
-                    <MapPin size={24} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Visit Us</p>
-                    <p className="text-gray-900 font-medium leading-relaxed">
-                      123, Toy Lane, Kid City,<br />Mumbai - 400001
-                    </p>
-                  </div>
+                
+                <div className="group">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2">Visit Hub</p>
+                  <p className="text-xl font-bold leading-relaxed group-hover:text-secondary transition-colors">
+                    123, Toy Lane, Kid City,<br />Mumbai - 400001
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-12 pt-8 border-t border-indigo-100">
-                <div className="flex items-center space-x-3 text-indigo-600 font-bold mb-4">
-                  <Clock size={20} />
+              <div className="mt-16 pt-10 border-t border-white/10 relative z-10">
+                <div className="flex items-center space-x-3 text-secondary font-black text-[10px] uppercase tracking-widest mb-6">
+                  <Clock size={16} />
                   <span>Working Hours</span>
                 </div>
-                <p className="text-indigo-900 text-sm">Monday - Saturday: 9:00 AM - 8:00 PM</p>
-                <p className="text-indigo-900 text-sm">Sunday: 10:00 AM - 4:00 PM</p>
+                <div className="space-y-2 text-sm font-medium text-white/50">
+                  <p className="flex justify-between"><span>Mon - Sat</span> <span>09:00 - 20:00</span></p>
+                  <p className="flex justify-between"><span>Sunday</span> <span>10:00 - 16:00</span></p>
+                </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-emerald-50 p-6 rounded-3xl flex items-center space-x-4 border border-emerald-100">
-              <div className="bg-emerald-500 p-3 rounded-2xl text-white">
-                <MessageCircle size={28} />
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-[2.5rem] p-8 flex items-center space-x-6 border border-dark/5 shadow-xl shadow-dark/5 group hover:scale-[1.02] transition-all cursor-pointer"
+            >
+              <div className="bg-accent/10 p-5 rounded-2xl text-accent group-hover:bg-accent group-hover:text-white transition-colors duration-500">
+                <MessageCircle size={32} />
               </div>
               <div>
-                <p className="font-bold text-gray-900">WhatsApp Support</p>
-                <p className="text-emerald-700 text-sm">Instant help via chat</p>
+                <p className="font-black text-dark text-lg leading-none mb-1">WhatsApp Hub</p>
+                <p className="text-dark/40 font-bold text-xs uppercase tracking-widest">Instant Chat Support</p>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl shadow-gray-200 border border-gray-100 relative">
-              {isSubmitted ? (
-                <div className="text-center py-20 animate-in fade-in zoom-in duration-500">
-                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Send size={40} />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h3>
-                  <p className="text-gray-500">We will get back to you within 24 hours.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Your Name</label>
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="lg:col-span-8 h-full"
+          >
+            <div className="bg-white p-10 md:p-20 rounded-[4rem] shadow-2xl border border-dark/5 h-full relative overflow-hidden group">
+              <AnimatePresence mode="wait">
+                {isSubmitted ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="text-center py-20"
+                  >
+                    <div className="w-24 h-24 bg-accent/10 text-accent rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-accent/5">
+                      <Send size={40} />
+                    </div>
+                    <h3 className="text-4xl font-black text-dark tracking-tighter mb-4 italic">Message Sent.</h3>
+                    <p className="text-dark/40 font-medium text-lg">We will get back to you within 24 hours.</p>
+                  </motion.div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-10 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Your Name</label>
+                        <input 
+                          required
+                          type="text" 
+                          placeholder="What should we call you?"
+                          className="w-full px-8 py-6 bg-canvas border-none rounded-3xl focus:ring-4 focus:ring-secondary/10 transition-all outline-none font-bold placeholder:text-dark/20 text-dark"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Email Address</label>
+                        <input 
+                          required
+                          type="email" 
+                          placeholder="Your primary email"
+                          className="w-full px-8 py-6 bg-canvas border-none rounded-3xl focus:ring-4 focus:ring-secondary/10 transition-all outline-none font-bold placeholder:text-dark/20 text-dark"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Inquiry Subject</label>
                       <input 
                         required
                         type="text" 
-                        placeholder="John Doe"
-                        className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
+                        placeholder="What's this about?"
+                        className="w-full px-8 py-6 bg-canvas border-none rounded-3xl focus:ring-4 focus:ring-secondary/10 transition-all outline-none font-bold placeholder:text-dark/20 text-dark"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
-                      <input 
+                    
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Your Message</label>
+                      <textarea 
                         required
-                        type="email" 
-                        placeholder="john@example.com"
-                        className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
-                      />
+                        rows={6}
+                        placeholder="Tell us everything..."
+                        className="w-full px-8 py-6 bg-canvas border-none rounded-[2.5rem] focus:ring-4 focus:ring-secondary/10 transition-all outline-none font-bold resize-none placeholder:text-dark/20 text-dark"
+                      ></textarea>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">Subject</label>
-                    <input 
-                      required
-                      type="text" 
-                      placeholder="Question about plans"
-                      className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">Message</label>
-                    <textarea 
-                      required
-                      rows={6}
-                      placeholder="How can we help you?"
-                      className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none resize-none"
-                    ></textarea>
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full py-5 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center space-x-3"
-                  >
-                    <span>Send Message</span>
-                    <Send size={20} />
-                  </button>
-                </form>
-              )}
+                    
+                    <button 
+                      type="submit"
+                      className="w-full py-6 bg-dark text-white font-black rounded-3xl shadow-2xl shadow-dark/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center space-x-4 group/submit"
+                    >
+                      <span className="text-sm uppercase tracking-widest">Transmit Message</span>
+                      <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </button>
+                  </form>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

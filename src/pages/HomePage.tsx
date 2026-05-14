@@ -1,226 +1,279 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Star, ShieldCheck, Truck, RefreshCw, Zap } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Truck, RefreshCw, Zap, Sparkles, Box, Heart, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
+
+const FloatingToy = ({ delay, children, className }: { delay: number, children: React.ReactNode, className?: string }) => (
+  <motion.div
+    initial={{ y: 20, opacity: 0 }}
+    animate={{ 
+      y: [0, -20, 0],
+      opacity: 1 
+    }}
+    transition={{ 
+      y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay },
+      opacity: { duration: 1, delay: delay * 0.5 }
+    }}
+    className={`absolute z-20 ${className}`}
+  >
+    {children}
+  </motion.div>
+);
 
 export const HomePage = () => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-canvas pt-20">
       {/* Hero Section */}
-      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#FBFBFF] py-20 lg:py-0">
-        <div className="absolute inset-x-0 bottom-0 top-0 bg-[radial-gradient(circle_at_50%_50%,#E0E7FF_0%,transparent_70%)]" />
-        
-        {/* Decorative Shapes */}
-        <div className="absolute top-20 left-10 w-64 h-64 bg-indigo-100/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" />
-        <div className="absolute top-40 right-10 w-72 h-72 bg-pink-100/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-20 w-80 h-80 bg-yellow-100/50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000" />
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden py-12 lg:py-20">
+        {/* Background Blobs */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-blob" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-[120px] animate-blob animation-delay-2000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-[150px] animate-blob animation-delay-4000" />
 
-        {/* Floating background text */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none opacity-[0.03] flex items-center justify-center">
-          <div className="text-[20rem] font-black font-display rotate-12 whitespace-nowrap animate-pulse">
-            PLAY PLAY PLAY PLAY
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-center items-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="text-center max-w-5xl mx-auto"
-          >
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center space-x-2 bg-white border border-indigo-100 px-4 py-2 rounded-full text-indigo-600 font-bold text-xs sm:text-sm mb-8 uppercase tracking-[0.2em] shadow-sm"
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Zap size={14} className="animate-pulse" />
-              <span>Smart Play for Smart Parents</span>
-            </motion.div>
-            
-            <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black text-gray-900 leading-[0.95] tracking-[-0.04em] font-display mb-12 overflow-hidden">
-              <div className="flex flex-wrap justify-center gap-x-[0.2em]">
-                {"Rent the ".split(" ").map((word, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                    className="inline-block"
-                  >
-                    {word}
-                  </motion.span>
-                ))}
-                <motion.span
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-indigo-600 italic"
-                >
-                  Play,
-                </motion.span>
-              </div>
-              <div className="flex flex-wrap justify-center gap-x-[0.2em]">
-                {"Swap the ".split(" ").map((word, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ y: "100%" }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.7 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                    className="inline-block"
-                  >
-                    {word}
-                  </motion.span>
-                ))}
-                <motion.span
-                  initial={{ y: "100%", rotate: 5 }}
-                  animate={{ y: 0, rotate: 0 }}
-                  transition={{ duration: 0.8, delay: 1.0, ease: [0.22, 1, 0.36, 1] }}
-                  className="inline-block text-pink-500"
-                >
-                  Mess.
-                </motion.span>
-              </div>
-            </h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, filter: "blur(10px)" }}
-              animate={{ opacity: 1, filter: "blur(0px)" }}
-              transition={{ duration: 1, delay: 1.2 }}
-              className="text-lg sm:text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-16 font-medium"
-            >
-              High-quality, curated toys delivered to your door every month. Save money, save space, and give your kids endless world-class toys.
-            </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.9 }}
-              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-            >
-              <Link
-                to="/toys"
-                className="w-full sm:w-auto inline-flex items-center justify-center px-12 py-6 border border-transparent text-xl font-black rounded-3xl text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 hover:scale-105 active:scale-95"
-              >
-                Browse Library
-              </Link>
-              <Link
-                to="/plans"
-                className="w-full sm:w-auto inline-flex items-center justify-center px-12 py-6 border-2 border-indigo-100 text-xl font-black rounded-3xl text-indigo-600 bg-white hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95"
-              >
-                See Plans
-              </Link>
-            </motion.div>
-
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2 }}
-              className="mt-20 flex flex-col items-center"
-            >
-              <div className="flex text-yellow-500 mb-2 space-x-1">
-                {[1, 2, 3, 4, 5].map((i) => <Star key={i} size={20} fill="currentColor" />)}
-              </div>
-              <p className="font-bold text-gray-900 text-lg font-display">4.9/5 from 2k+ families</p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
-            {[
-              { icon: Truck, title: "Free Delivery", desc: "Doorstep delivery and pickup included in every plan. Zero hidden costs." },
-              { icon: ShieldCheck, title: "Safe & Sanitized", desc: "Hospital-grade cleaning for every single toy. Safety is our #1 priority." },
-              { icon: Zap, title: "AI Recommender", desc: "Use our Gemini-powered AI Concierge to find toys that match your child's milestones." }
-            ].map((feature, i) => (
               <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -10 }}
-                className="flex flex-col items-center md:items-start p-10 rounded-[3rem] border border-gray-100 bg-white hover:border-indigo-200 transition-all hover:shadow-[0_32px_64px_-12px_rgba(79,70,229,0.1)] group"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-xl shadow-dark/5 mb-8"
               >
-                <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 mb-10 group-hover:scale-110 transition-transform duration-500">
-                  <feature.icon size={40} />
-                </div>
-                <h3 className="text-3xl font-black text-gray-900 mb-6 font-display group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{feature.title}</h3>
-                <p className="text-gray-500 leading-relaxed text-base font-medium">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-32 bg-gray-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-20">
-            <div className="lg:w-1/2">
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-              >
-                <span className="text-indigo-600 font-black tracking-widest uppercase text-sm mb-6 block">Simple Process</span>
-                <h2 className="text-5xl md:text-7xl font-black text-gray-900 font-display mb-10 leading-tight">How it <span className="italic text-indigo-600">Works</span></h2>
-                
-                <div className="space-y-12">
-                  {[
-                    { step: "01", title: "Pick a Plan", desc: "Choose a subscription that fits your child's age and your budget." },
-                    { step: "02", title: "Select Your Toys", desc: "Browse our 10,000+ toy library and fill your magic play box." },
-                    { step: "03", title: "Deliver & Play", desc: "We deliver sanitised toys within 48 hours. Let the fun begin!" },
-                    { step: "04", title: "Swap Monthly", desc: "Done playing? We pick them up and bring your next set of toys." }
-                  ].map((item, idx) => (
-                    <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, x: -30 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: idx * 0.2, duration: 0.8, ease: "easeOut" }}
-                      className="flex space-x-8 relative group"
-                    >
-                      <div className="text-indigo-600/10 font-black text-6xl sm:text-8xl font-display group-hover:text-indigo-600/40 transition-all duration-700 shrink-0 select-none scale-90 group-hover:scale-100">
-                        {item.step}
-                      </div>
-                      <div className="pt-4">
-                        <h4 className="text-2xl sm:text-3xl font-black text-gray-900 font-display mb-3 group-hover:translate-x-2 transition-transform duration-500">{item.title}</h4>
-                        <p className="text-gray-500 font-medium text-lg leading-relaxed">{item.desc}</p>
-                      </div>
-                    </motion.div>
+                <div className="flex -space-x-2 mr-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="user" />
+                    </div>
                   ))}
                 </div>
+                <span className="text-dark/60 font-bold text-xs uppercase tracking-widest">Trusted by 5,000+ Parents</span>
+              </motion.div>
+              
+              <h1 className="text-6xl sm:text-7xl xl:text-8xl font-black text-dark leading-[0.95] tracking-tight mb-8">
+                The Smart Way <br />
+                To <span className="text-primary italic">Play & Grow.</span>
+              </h1>
+              
+              <p className="text-xl text-dark/60 max-w-lg leading-relaxed mb-10 font-medium">
+                Access a library of ₹5L+ world-class developmental toys for a fraction of the cost. Monthly swaps, zero mess, infinite fun.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/toys"
+                  className="group relative inline-flex items-center justify-center px-10 py-5 bg-dark text-white text-lg font-black rounded-2xl overflow-hidden shadow-2xl transition-all hover:scale-[1.02] active:scale-95"
+                >
+                  <span className="relative z-10 flex items-center">
+                    Explore Toys
+                    <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                  </span>
+                  <div className="absolute inset-0 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+                <Link
+                  to="/plans"
+                  className="inline-flex items-center justify-center px-10 py-5 bg-white border-2 border-dark/5 text-dark text-lg font-black rounded-2xl hover:bg-dark/5 transition-all"
+                >
+                  View Plans
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Visual Side */}
+            <div className="relative h-[600px] hidden lg:block">
+              {/* Floating Cards */}
+              <FloatingToy delay={0} className="top-10 left-0 w-64">
+                <div className="glass p-4 rounded-[2rem] rotate-[-6deg]">
+                  <img 
+                    src="https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=400" 
+                    alt="Toy" 
+                    className="rounded-2xl mb-3 h-40 w-full object-cover"
+                  />
+                  <p className="font-bold text-dark">Wooden Montessori Set</p>
+                  <p className="text-xs text-dark/50">Age: 1-3 years</p>
+                </div>
+              </FloatingToy>
+
+              <FloatingToy delay={2} className="bottom-20 right-0 w-72">
+                <div className="glass p-6 rounded-[2.5rem] rotate-[4deg]">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="bg-primary/20 p-2 rounded-xl">
+                      <Sparkles className="text-primary" size={20} />
+                    </div>
+                    <p className="font-black text-dark">Premium Quality</p>
+                  </div>
+                  <p className="text-sm text-dark/70 leading-relaxed font-medium">Curated by developmental experts for specific age milestones.</p>
+                </div>
+              </FloatingToy>
+
+              <FloatingToy delay={1} className="top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-80">
+                <div className="bg-dark p-8 rounded-[3rem] shadow-2xl rotate-2">
+                  <div className="flex justify-between items-start mb-12">
+                    <div className="bg-white/10 p-4 rounded-2xl">
+                      <Box className="text-white" size={32} />
+                    </div>
+                    <div className="bg-accent px-4 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                      Your Box
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-2 w-full bg-white/10 rounded-full" />
+                    <div className="h-2 w-2/3 bg-white/10 rounded-full" />
+                    <div className="h-2 w-1/2 bg-white/20 rounded-full" />
+                  </div>
+                  <div className="mt-8 flex justify-between items-center">
+                    <p className="text-white font-black text-2xl">₹1,799<span className="text-white/40 text-sm font-medium">/mo</span></p>
+                    <div className="bg-white text-dark p-2 rounded-xl">
+                      <CheckCircle2 size={24} />
+                    </div>
+                  </div>
+                </div>
+              </FloatingToy>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bento Grid Features */}
+      <section className="py-24 px-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-6xl font-black text-dark mb-6">Built for <span className="text-secondary italic">Modern</span> Families</h2>
+            <p className="text-dark/50 font-medium text-lg">We've reimagined the toy box for the 21st century.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:h-[600px]">
+            {/* Sanitization - Large Bento */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-2 bg-white border border-dark/5 rounded-[3rem] p-10 overflow-hidden relative group"
+            >
+              <div className="relative z-10 max-w-md">
+                <div className="bg-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center text-accent mb-8">
+                  <ShieldCheck size={32} />
+                </div>
+                <h3 className="text-4xl font-black text-dark mb-4">Medical Grade Sanitization</h3>
+                <p className="text-lg text-dark/60 font-medium">Every toy undergoes a 5-step cleaning process including UV-C sterilization and organic deep cleaning. Safer than buying new.</p>
+              </div>
+              <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block opacity-20 group-hover:opacity-40 transition-opacity">
+                <img 
+                  src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800" 
+                  alt="Sanitization" 
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </motion.div>
+
+            {/* Delivery - Small Bento */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-secondary p-10 rounded-[3rem] text-white flex flex-col justify-end overflow-hidden relative group"
+            >
+              <div className="absolute top-0 right-0 p-8">
+                <Truck size={48} className="text-white/20 group-hover:scale-125 transition-transform duration-500" />
+              </div>
+              <h3 className="text-3xl font-black mb-4">48h Delivery</h3>
+              <p className="text-white/70 font-medium leading-relaxed">Doorstep delivery and pickup included. Hassle-free monthly swaps.</p>
+            </motion.div>
+
+            {/* AI Agent - Small Bento */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="bg-dark p-10 rounded-[3rem] text-white flex flex-col justify-between"
+            >
+              <div className="bg-primary w-14 h-14 rounded-2xl flex items-center justify-center">
+                <Sparkles size={28} />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black mb-4">AI Concierge</h3>
+                <p className="text-white/50 font-medium">Talk to our expert AI agent to get personalized toy recommendations for your child's age.</p>
+              </div>
+            </motion.div>
+
+            {/* Values - Wide Bento */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="md:col-span-2 glass rounded-[3rem] p-10 flex flex-col lg:flex-row items-center gap-10"
+            >
+              <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+                {[
+                  { label: "Cost Saved", val: "₹15L+" },
+                  { label: "Toys Reused", val: "10k+" },
+                  { label: "Happy Parents", val: "2k+" },
+                  { label: "States", val: "28" }
+                ].map((stat, i) => (
+                  <div key={i} className="bg-canvas p-6 rounded-3xl">
+                    <p className="text-dark/40 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-2xl font-black text-dark tracking-tight">{stat.val}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="lg:w-1/2">
+                <h3 className="text-3xl font-black text-dark mb-4">Big Joy, Small Footprint</h3>
+                <p className="text-dark/50 font-medium leading-relaxed">Save money and the planet. By sharing toys, we reduce plastic waste while giving children better variety.</p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Testimonials */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <div className="relative">
+              <div className="bg-canvas aspect-square rounded-[4rem] overflow-hidden rotate-[-2deg]">
+                <img 
+                  src="https://images.unsplash.com/photo-1484820540004-14229fe36ca4?auto=format&fit=crop&q=80&w=800" 
+                  alt="Happy Child" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <motion.div 
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute -bottom-8 -right-8 glass p-8 rounded-[2.5rem] shadow-2xl max-w-xs"
+              >
+                <div className="flex items-center space-x-2 mb-3">
+                  {[1, 2, 3, 4, 5].map(i => <Star key={i} className="text-yellow-400 fill-yellow-400" size={16} />)}
+                </div>
+                <p className="text-dark font-bold italic mb-4">"PlayPro has completely changed our playrooms. No more toy clutter!"</p>
+                <p className="text-sm font-black text-dark">Ananya M., Parent</p>
               </motion.div>
             </div>
-            
-            <div className="lg:w-5/12 relative">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
-                className="relative"
+
+            <div className="space-y-12">
+              <h2 className="text-4xl md:text-6xl font-black text-dark leading-tight">Trusted by Parents <br /> across India.</h2>
+              
+              <div className="grid gap-6">
+                {[
+                  { title: "Curated developmental focus", desc: "Every toy is hand-picked to help your child reach specific developmental milestones." },
+                  { title: "Economical & Sustainable", desc: "Get ₹10k worth of toys for ₹999. Better for your wallet and the planet." },
+                  { title: "Peace of Mind", desc: "No broken toys, no missing pieces. We handle everything." }
+                ].map((item, i) => (
+                  <div key={i} className="flex space-x-6">
+                    <div className="shrink-0 w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                      <Heart size={24} fill="currentColor" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black text-dark mb-2">{item.title}</h4>
+                      <p className="text-dark/60 font-medium leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                to="/toys"
+                className="inline-flex items-center space-x-3 px-8 py-4 bg-dark text-white rounded-2xl font-black transition-all hover:scale-105"
               >
-                <div className="bg-white p-6 rounded-[3.5rem] shadow-2xl rotate-3 relative z-10">
-                  <img 
-                    src="https://images.unsplash.com/photo-1545558014-8692070000f2?auto=format&fit=crop&q=80&w=1000" 
-                    alt="Sanitized Toys" 
-                    className="rounded-[3rem] w-full"
-                  />
-                </div>
-                <div className="absolute -bottom-10 -left-10 bg-pink-500 p-8 rounded-3xl text-white shadow-2xl -rotate-6 z-20 max-w-[240px]">
-                  <p className="text-xl font-black font-display mb-2 italic">Clean & Safe</p>
-                  <p className="text-sm font-medium opacity-90">Every toy is sanitized with hospital-grade solution before every delivery.</p>
-                </div>
-                <div className="absolute inset-0 bg-indigo-200 blur-3xl opacity-30 rounded-full -z-10 scale-110" />
-              </motion.div>
+                <span>Start Your First Box</span>
+                <ArrowRight size={20} />
+              </Link>
             </div>
           </div>
         </div>

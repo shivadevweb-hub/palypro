@@ -1,101 +1,99 @@
 
 import React from 'react';
 import { ShieldAlert, BookOpen, Clock, Lock } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export const PrivacyPolicyPage = () => {
   return (
-    <div className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+    <div className="bg-canvas pt-32 pb-40 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center p-3 bg-indigo-50 rounded-2xl text-indigo-600 mb-6 font-bold">
-            <Lock className="mr-2" size={20} />
-            Privacy Protection
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-24"
+        >
+          <div className="inline-flex items-center justify-center px-4 py-2 bg-dark/5 rounded-full text-dark/40 mb-8 font-black text-[10px] uppercase tracking-[0.2em]">
+            <Lock className="mr-3" size={14} />
+            Privacy Protection Protocol
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">Privacy Policy</h1>
-          <p className="text-gray-500 font-medium">Last updated: May 2024</p>
-        </div>
+          <h1 className="text-5xl md:text-7xl font-black text-dark tracking-tighter mb-6 italic">Privacy Policy<span className="text-primary">.</span></h1>
+          <p className="text-dark/30 font-bold uppercase tracking-widest text-xs">Last updated: May 2024</p>
+        </motion.div>
 
-        <div className="space-y-12 text-gray-600 leading-relaxed">
+        <div className="space-y-20 text-dark/50 font-medium leading-relaxed">
           <section>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">1</div>
-              <h2 className="text-2xl font-bold text-gray-900">Information We Collect</h2>
+            <div className="flex items-center space-x-5 mb-8">
+              <div className="text-4xl font-black text-primary/20 italic">01.</div>
+              <h2 className="text-3xl font-black text-dark tracking-tight italic">Information We Collect.</h2>
             </div>
-            <p className="mb-4">
-              PlayPro collects personal information to provide and improve our services. This includes:
+            <p className="mb-8 text-lg">
+              PlayPro collects personal information to provide and improve our services. Our data collection is minimal and designed for security:
             </p>
-            <ul className="list-disc ml-6 space-y-2">
-              <li><strong>Contact Information:</strong> Name, address, email address, and phone number when you register or place a rental order.</li>
-              <li><strong>Payment Information:</strong> We use Razorpay to process payments. We do not store your full card numbers or bank credentials on our servers.</li>
-              <li><strong>Usage Data:</strong> Information about the toys you rent and how you interact with our website to improve your experience.</li>
-            </ul>
-          </section>
-
-          <section>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">2</div>
-              <h2 className="text-2xl font-bold text-gray-900">How We Use Your Data</h2>
-            </div>
-            <p className="mb-4">We use the collected information for the following purposes:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-6 rounded-2xl">
-                <Clock className="text-indigo-600 mb-3" size={24} />
-                <h3 className="font-bold text-gray-900 mb-2">Service Delivery</h3>
-                <p className="text-sm text-gray-500">To process orders, deliver toys, and manage your subscription plans.</p>
+              {[
+                { title: "Identity Data", items: ["Legal Name", "Physical Address", "Email Point", "Contact Number"] },
+                { title: "Service Data", items: ["Rental History", "Toy Preferences", "Cleanliness Logs", "Subscription Tier"] }
+              ].map((group, i) => (
+                <div key={i} className="bg-white p-8 rounded-[2rem] border border-dark/5">
+                  <h3 className="font-black text-dark uppercase tracking-widest text-[10px] mb-6">{group.title}</h3>
+                  <ul className="space-y-3">
+                    {group.items.map((item, j) => (
+                      <li key={j} className="flex items-center space-x-3 text-sm">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center space-x-5 mb-8">
+              <div className="text-4xl font-black text-secondary/20 italic">02.</div>
+              <h2 className="text-3xl font-black text-dark tracking-tight italic">Usage & Processing.</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-10 rounded-[2.5rem] border border-dark/5 relative overflow-hidden group">
+                <Clock className="text-secondary/30 mb-6 group-hover:scale-110 transition-transform duration-500" size={32} />
+                <h3 className="text-xl font-black text-dark mb-4 tracking-tight">Service Delivery</h3>
+                <p className="text-sm leading-relaxed">To coordinate complex logistics, sanitize inventory, and manages active child-play cycles.</p>
               </div>
-              <div className="bg-gray-50 p-6 rounded-2xl">
-                <ShieldAlert className="text-indigo-600 mb-3" size={24} />
-                <h3 className="font-bold text-gray-900 mb-2">Safety & Verification</h3>
-                <p className="text-sm text-gray-500">To verify your identity and ensure the security of our toy rental community.</p>
+              <div className="bg-white p-10 rounded-[2.5rem] border border-dark/5 relative overflow-hidden group">
+                <ShieldAlert className="text-accent/30 mb-6 group-hover:scale-110 transition-transform duration-500" size={32} />
+                <h3 className="text-xl font-black text-dark mb-4 tracking-tight">Vault Security</h3>
+                <p className="text-sm leading-relaxed">To verify guardian identity and maintain the integrity of our premium toy circle.</p>
               </div>
             </div>
           </section>
 
           <section>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">3</div>
-              <h2 className="text-2xl font-bold text-gray-900">Data Security</h2>
-            </div>
-            <div className="bg-indigo-600 text-white p-8 rounded-3xl relative overflow-hidden">
-              <div className="relative z-10">
-                <p className="text-lg font-medium leading-relaxed">
-                  We implement industry-standard security measures, including SSL encryption and secure firewalls, to protect your personal information from unauthorized access, loss, or theft.
-                </p>
+            <div className="bg-dark p-12 md:p-20 rounded-[4rem] text-white overflow-hidden relative group">
+              <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+                <div className="flex-1">
+                  <h2 className="text-3xl font-black tracking-tighter mb-6 italic italic">Encrypted by Design.</h2>
+                  <p className="text-white/40 text-lg font-medium leading-relaxed italic">
+                    We implement military-grade encryption and zero-knowledge storage where possible to ensure your family's data remains private.
+                  </p>
+                </div>
+                <div className="w-24 h-24 bg-white/10 rounded-3xl flex items-center justify-center backdrop-blur-xl border border-white/10">
+                  <Lock size={40} className="text-white" />
+                </div>
               </div>
-              <Lock className="absolute -right-8 -bottom-8 opacity-10" size={160} />
+              {/* Background Accent */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] rounded-full group-hover:scale-125 transition-transform duration-1000" />
             </div>
           </section>
 
-          <section>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-bold">4</div>
-              <h2 className="text-2xl font-bold text-gray-900">Your Choices</h2>
+          <section className="pt-20 border-t border-dark/5 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div>
+              <h2 className="text-2xl font-black text-dark mb-2 tracking-tight">Data Governance</h2>
+              <p className="text-sm font-medium">Questions or deletions? Our DPO is standing by.</p>
             </div>
-            <p className="mb-6">You have rights over your data, including:</p>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <div className="mt-1.5"><BookOpen size={18} className="text-indigo-600" /></div>
-                <div>
-                  <p className="font-bold text-gray-900">Access and Correction</p>
-                  <p className="text-sm">You can view and update your profile information anytime through your account dashboard.</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="mt-1.5"><ShieldAlert size={18} className="text-indigo-600" /></div>
-                <div>
-                  <p className="font-bold text-gray-900">Opt-out</p>
-                  <p className="text-sm">You can unsubscribe from marketing emails at any time using the link at the bottom of our emails.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="pt-12 border-t border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Privacy Team</h2>
-            <p className="text-sm">
-              If you have any questions or concerns about this Privacy Policy, please contact our Data Protection Officer at: 
-              <a href="mailto:privacy@playpro.com" className="text-indigo-600 font-bold ml-2 hover:underline">privacy@playpro.com</a>
-            </p>
+            <a href="mailto:privacy@playpro.com" className="px-10 py-5 bg-canvas border border-dark/10 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-dark hover:text-white transition-all">
+              privacy@playpro.com
+            </a>
           </section>
         </div>
       </div>

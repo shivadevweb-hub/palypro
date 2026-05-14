@@ -14,8 +14,8 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { CookiePolicyPage } from './pages/CookiePolicyPage';
-import { AIParentConcierge } from './components/AIParentConcierge';
 import { CookieConsent } from './components/CookieConsent';
+import { AIParentConcierge } from './components/AIParentConcierge';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -37,10 +37,10 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
 
 const PageWrapper = ({ children }: { children: React.ReactNode }) => (
   <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.3, ease: "easeOut" }}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.2 }}
   >
     {children}
   </motion.div>
@@ -68,7 +68,7 @@ const AppContent = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
             <Routes location={location}>
               <Route path="/" element={<PageWrapper><HomePage /></PageWrapper>} />
@@ -91,8 +91,8 @@ const AppContent = () => {
         </AnimatePresence>
       </main>
       <Footer />
-      <AIParentConcierge />
       <CookieConsent />
+      <AIParentConcierge />
     </div>
   );
 };

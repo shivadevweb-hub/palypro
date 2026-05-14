@@ -17,8 +17,10 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        // Hardcoded admin for initial setup - allowing without verified check for bootstrap phase
+        // Hardcoded admins for bootstrap phase
         request.auth.token.email == 'adminplaypro@gmail.com' ||
+        request.auth.token.email == 'admin@playpro.com' ||
+        request.auth.token.email == 'shivadevweb@gmail.com' ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -51,7 +53,8 @@ service cloud.firestore {
              data.shortDescription is string &&
              data.fullDescription is string &&
              data.brand is string &&
-             data.available is bool;
+             data.available is bool &&
+             (data.get('createdAt', '') is string);
     }
 
     function isValidOrder(data) {
@@ -76,7 +79,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(incoming()) && (incoming().isAdmin == false || incoming().email == 'adminplaypro@gmail.com');
+      allow create: if isOwner(userId) && isValidUser(incoming()) && (
+        incoming().isAdmin == false || 
+        incoming().email == 'adminplaypro@gmail.com' ||
+        incoming().email == 'admin@playpro.com' ||
+        incoming().email == 'shivadevweb@gmail.com'
+      );
       allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
         // User updating their own profile (cannot change isAdmin unless they are the bootstrap admin)
         (isOwner(userId) && (incoming().isAdmin == existing().isAdmin || isAdmin())) ||

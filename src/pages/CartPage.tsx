@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShoppingBag, ChevronLeft, CreditCard, Truck, ShieldCheck, CheckCircle, Package, Loader2, MapPin, Phone } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, ShieldCheck, CheckCircle, Package, Loader2, MapPin, Phone, Sparkles, AlertCircle, ArrowRight, Box } from 'lucide-react';
 import { usePlay } from '../PlayContext';
 import { motion } from 'motion/react';
 
@@ -42,8 +42,6 @@ export const CartPage = () => {
     
     // Check if Razorpay SDK is loaded
     if (typeof (window as any).Razorpay === 'undefined') {
-      // alert("Razorpay checkout script failed to load. Please check your connection.");
-      // Fallback for demo
       if (confirm(`Razorpay script not loaded. Would you like to simulate a successful payment?`)) {
         await placeOrder();
         setIsOrdered(true);
@@ -54,7 +52,6 @@ export const CartPage = () => {
     setIsProcessing(true);
 
     try {
-      // 1. Create order on server
       const response = await fetch("/api/payment/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,7 +69,6 @@ export const CartPage = () => {
 
       const order = await response.json();
 
-      // 2. Open Razorpay Checkout
       const options = {
         key: razorpayKey,
         amount: order.amount,
@@ -82,7 +78,6 @@ export const CartPage = () => {
         image: "https://www.google.com/favicon.ico",
         order_id: order.id,
         handler: async function (response: any) {
-          console.log("Payment Successful:", response.razorpay_payment_id);
           await placeOrder();
           setIsOrdered(true);
           setIsProcessing(false);
@@ -92,7 +87,7 @@ export const CartPage = () => {
           email: user.email,
           contact: phone
         },
-        theme: { color: "#4f46e5" },
+        theme: { color: "#FF7A59" },
         modal: {
           ondismiss: function() {
             setIsProcessing(false);
@@ -104,7 +99,6 @@ export const CartPage = () => {
       rzp.open();
 
     } catch (error: any) {
-      console.error("Payment Initialization Error:", error);
       if (confirm(`Payment gateway couldn't be initialized: ${error.message}. \n\nWould you like to simulate a successful payment for this demo?`)) {
         await placeOrder();
         setIsOrdered(true);
@@ -115,30 +109,29 @@ export const CartPage = () => {
 
   if (isOrdered) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="max-w-md w-full text-center"
+          className="max-w-md w-full bg-white rounded-[3rem] p-12 text-center shadow-2xl border border-dark/5"
         >
-          <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-green-100 shadow-inner">
-            <CheckCircle className="text-green-500" size={48} />
+          <div className="w-24 h-24 bg-accent/10 rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-accent/5">
+            <CheckCircle className="text-accent" size={48} />
           </div>
-          <h1 className="text-4xl font-black text-gray-900 mb-4">You're All Set!</h1>
-          <p className="text-gray-500 mb-10 leading-relaxed">
+          <h1 className="text-5xl font-black text-dark tracking-tighter mb-4">Pure Joy.</h1>
+          <p className="text-dark/50 font-medium mb-12 leading-relaxed">
             Your toys are being sanitized and packed. Expect your PlayPro box at your doorstep in 2-3 business days.
           </p>
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                clearSelection();
-                navigate('/');
-              }}
-              className="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-lg"
-            >
-              Back to Home
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              clearSelection();
+              navigate('/');
+            }}
+            className="w-full py-5 bg-dark text-white font-black rounded-2xl hover:bg-dark/90 transition-all shadow-xl shadow-dark/20 hover:scale-[1.02] active:scale-95 flex items-center justify-center space-x-2"
+          >
+            <span>Go to Dashboard</span>
+            <ArrowRight size={20} />
+          </button>
         </motion.div>
       </div>
     );
@@ -146,14 +139,14 @@ export const CartPage = () => {
 
   if (!selectedToys.length || !currentPlan) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-400">
-            <ShoppingBag size={40} />
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
+        <div className="text-center bg-white p-16 rounded-[4rem] shadow-xl border border-dark/5">
+          <div className="w-24 h-24 bg-dark/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 text-dark/20">
+            <ShoppingBag size={48} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your box is empty</h2>
-          <p className="text-gray-500 mb-8 max-w-xs mx-auto">Fill it with amazing toys to start your subscription adventure.</p>
-          <Link to="/toys" className="inline-block px-10 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100">
+          <h2 className="text-3xl font-black text-dark mb-4">Your box is empty.</h2>
+          <p className="text-dark/40 font-medium mb-12 max-w-xs mx-auto leading-relaxed">Fill it with amazing toys to start your subscription adventure.</p>
+          <Link to="/toys" className="inline-block px-12 py-5 bg-primary text-white font-black rounded-2xl shadow-2xl shadow-primary/20 hover:scale-105 transition-all">
             Find Toys
           </Link>
         </div>
@@ -162,205 +155,239 @@ export const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 md:py-20">
-      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Left: Summary */}
-        <div className="lg:col-span-8">
-          <div className="flex items-center space-x-2 mb-8">
-            <Link to="/select-toys" className="p-2 bg-white rounded-xl shadow-sm text-gray-400 hover:text-indigo-600 border border-gray-100">
-              <ChevronLeft size={20} />
-            </Link>
-            <h1 className="text-3xl font-black text-gray-900">Your PlayPro Box</h1>
-          </div>
-
-          <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                  <MapPin size={20} />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Shipping Info</h3>
-              </div>
-              <button 
-                onClick={() => setIsUpdatingAddress(!isUpdatingAddress)}
-                className="text-xs font-bold text-indigo-600 uppercase tracking-widest hover:underline"
-              >
-                {isUpdatingAddress ? 'Cancel' : 'Edit'}
-              </button>
-            </div>
-            
-            <div className="p-8">
-              {isUpdatingAddress ? (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Recipient Name</label>
-                    <input 
-                      type="text"
-                      value={shippingName}
-                      onChange={(e) => setShippingName(e.target.value)}
-                      placeholder="Who's playing?"
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 transition-all font-bold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Full Shipping Address</label>
-                    <textarea 
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Street, House No, City, Pincode..."
-                      rows={3}
-                      className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 transition-all font-bold resize-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                      <input 
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="10-digit mobile number"
-                        className="w-full pl-14 pr-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 transition-all font-bold"
-                      />
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setIsUpdatingAddress(false)}
-                    className="w-full py-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-100 transition-all"
-                  >
-                    Confirm Address
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-col space-y-1 mb-4">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Ship to</span>
-                    <h4 className="text-xl font-black text-gray-900">{shippingName || user?.name}</h4>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="font-bold text-gray-900 flex-grow">
-                      {address || <span className="text-red-400 italic">No address provided</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center text-gray-500 font-medium">
-                    <Phone size={14} className="mr-2" />
-                    {phone || <span className="text-red-400 italic">No phone provided</span>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-8 border-b border-gray-50 bg-gray-50/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{currentPlan.name}</h3>
-                  <p className="text-sm text-gray-500 font-medium">Monthly collection of {currentPlan.toyCount} toys</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-2xl font-black text-gray-900">₹{currentPlan.price}</span>
-                  <span className="text-gray-500 text-sm ml-1">/mo</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 space-y-6">
-              {selectedToys.map((toy) => (
-                <div key={toy.id} className="flex items-center space-x-6">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-sm flex-shrink-0 border border-gray-50">
-                    <img src={toy.image} alt={toy.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-grow">
-                    <h4 className="font-bold text-gray-900">{toy.name}</h4>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest">{toy.category} • {toy.ageRange}</p>
-                  </div>
-                  <Package size={20} className="text-indigo-200" />
-                </div>
-              ))}
-              
-              {selectedToys.length < currentPlan.toyCount && (
-                <Link 
-                  to="/select-toys"
-                  className="flex items-center space-x-6 p-4 border-2 border-dashed border-gray-100 rounded-3xl text-gray-400 hover:border-indigo-200 hover:text-indigo-600 transition-all"
-                >
-                  <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center">
-                    <ShoppingBag size={24} />
-                  </div>
-                  <span className="font-bold">Add {currentPlan.toyCount - selectedToys.length} more toys to fill your box</span>
-                </Link>
-              )}
-            </div>
-          </div>
+    <div className="min-h-screen bg-canvas py-12 md:py-20 lg:pt-32">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center space-x-4 mb-20">
+          <Link to="/select-toys" className="p-3 bg-white rounded-2xl shadow-xl text-dark hover:text-primary transition-all hover:scale-110 active:scale-95">
+            <ChevronLeft size={24} />
+          </Link>
+          <h1 className="text-5xl font-black text-dark tracking-tighter">Your <span className="text-primary italic">Box.</span></h1>
         </div>
 
-        {/* Right: Checkout */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-32 space-y-6">
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
-              
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between text-gray-600">
-                  <span>Plan Subtotal</span>
-                  <span className="font-bold text-gray-900">₹{planPrice}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>GST (18%)</span>
-                  <span className="font-bold text-gray-900">₹{gstAmount}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <div className="flex items-center">
-                    <span>Security Deposit</span>
-                    <span className="ml-1 text-[10px] text-indigo-400 font-bold uppercase">(Refundable)</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Left: Summary */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* Shipping Info Card */}
+            <div className="bg-white rounded-[3rem] shadow-xl border border-dark/5 overflow-hidden">
+              <div className="p-10 border-b border-dark/5 flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary">
+                    <MapPin size={24} />
                   </div>
-                  <span className="font-bold text-gray-900">₹{depositAmount}</span>
+                  <h3 className="text-2xl font-black text-dark tracking-tight">Delivery Details</h3>
                 </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Shipping amount</span>
-                  <span className="text-green-500 font-bold uppercase text-xs tracking-widest underline decoration-dotted">Free</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Cleaning Fee</span>
-                  <span className="text-green-500 font-bold uppercase text-xs tracking-widest">Waived</span>
-                </div>
-                <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900">Total</span>
-                  <span className="text-3xl font-black text-indigo-600">₹{totalAmount}</span>
-                </div>
+                <button 
+                  onClick={() => setIsUpdatingAddress(!isUpdatingAddress)}
+                  className="text-[10px] font-black text-secondary tracking-widest uppercase hover:underline p-2"
+                >
+                  {isUpdatingAddress ? 'Back' : 'Change Address'}
+                </button>
               </div>
-
-              <button
-                onClick={handlePayment}
-                disabled={selectedToys.length === 0 || isProcessing}
-                className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center mb-6 disabled:opacity-70"
-              >
-                {isProcessing ? (
-                  <Loader2 className="animate-spin" size={20} />
+              
+              <div className="p-10">
+                {isUpdatingAddress ? (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Recipient Name</label>
+                      <input 
+                        type="text"
+                        value={shippingName}
+                        onChange={(e) => setShippingName(e.target.value)}
+                        placeholder="Who's playing?"
+                        className="w-full px-6 py-5 bg-canvas border-none rounded-2xl focus:ring-4 focus:ring-secondary/10 transition-all font-bold placeholder:text-dark/20 text-dark"
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Phone Number</label>
+                        <input 
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="Your mobile number"
+                          className="w-full px-6 py-5 bg-canvas border-none rounded-2xl focus:ring-4 focus:ring-secondary/10 transition-all font-bold placeholder:text-dark/20 text-dark"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">City/Area</label>
+                        <input 
+                          type="text"
+                          placeholder="Where are you located?"
+                          className="w-full px-6 py-5 bg-canvas border-none rounded-2xl focus:ring-4 focus:ring-secondary/10 transition-all font-bold placeholder:text-dark/20 text-dark"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-dark/30 uppercase tracking-[0.2em] ml-1">Full Address</label>
+                      <textarea 
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Street, House No, Pincode..."
+                        rows={3}
+                        className="w-full px-6 py-5 bg-canvas border-none rounded-2xl focus:ring-4 focus:ring-secondary/10 transition-all font-bold resize-none placeholder:text-dark/20 text-dark"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => setIsUpdatingAddress(false)}
+                      className="w-full py-5 bg-secondary text-white font-black rounded-2xl hover:bg-secondary/90 transition-all shadow-xl shadow-secondary/20 hover:scale-[1.02] active:scale-95"
+                    >
+                      Confirm Address
+                    </button>
+                  </div>
                 ) : (
-                  <>
-                    <CreditCard size={18} className="mr-2" />
-                    Start My Subscription
-                  </>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black text-dark/20 uppercase tracking-[0.2em]">Shipping to</p>
+                      <h4 className="text-3xl font-black text-dark leading-none">{shippingName || user?.name}</h4>
+                      <p className="text-dark/50 font-medium text-lg leading-relaxed max-w-sm">
+                        {address || <span className="text-primary italic">No address provided</span>}
+                      </p>
+                    </div>
+                    <div className="bg-canvas px-6 py-4 rounded-2xl flex items-center space-x-3 border border-dark/5 self-start">
+                      <Phone size={18} className="text-secondary" />
+                      <span className="font-bold text-dark">{phone || user?.phone}</span>
+                    </div>
+                  </div>
                 )}
-              </button>
-
-              <div className="space-y-4">
-                <div className="flex items-center text-xs text-gray-500">
-                  <Truck className="mr-2" size={14} />
-                  <span>Ships within 48 hours</span>
-                </div>
-                <div className="flex items-center text-xs text-gray-500">
-                  <ShieldCheck className="mr-2" size={14} />
-                  <span>Sanitized & inspected guarantee</span>
-                </div>
               </div>
             </div>
-            
-            <div className="bg-indigo-50 rounded-3xl p-6 text-center">
-              <p className="text-sm font-bold text-indigo-600">Need help? Text us 24/7</p>
-              <p className="text-xs text-indigo-400 mt-1">Support: +1 (555) PLAY-PRO</p>
+
+            {/* Toys List Card */}
+            <div className="bg-white rounded-[3rem] shadow-xl border border-dark/5 overflow-hidden">
+              <div className="p-10 border-b border-dark/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                      <Box size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-dark tracking-tight">{currentPlan.name} Bundle</h3>
+                      <p className="text-[10px] font-black text-dark/30 uppercase tracking-widest">{currentPlan.toyCount} Premium Toys</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-10 space-y-8">
+                {selectedToys.map((toy) => (
+                  <div key={toy.id} className="flex items-center group">
+                    <div className="w-24 h-24 rounded-[2rem] overflow-hidden shadow-xl border border-dark/5 group-hover:scale-105 transition-transform duration-500">
+                      <img src={toy.image} alt={toy.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="ml-8 flex-grow">
+                      <h4 className="text-xl font-black text-dark tracking-tight leading-none mb-2">{toy.name}</h4>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-[10px] font-black text-dark/20 uppercase tracking-widest">{toy.category}</span>
+                        <span className="w-1 h-1 bg-dark/10 rounded-full" />
+                        <span className="text-[10px] font-black text-dark/20 uppercase tracking-widest">Age {toy.ageRange}</span>
+                      </div>
+                    </div>
+                    <div className="hidden md:flex items-center space-x-2 bg-accent/10 px-4 py-2 rounded-xl text-accent font-black text-[10px] uppercase tracking-widest">
+                      <Sparkles size={14} />
+                      <span>Sanitized</span>
+                    </div>
+                  </div>
+                ))}
+                
+                {selectedToys.length < currentPlan.toyCount && (
+                  <Link 
+                    to="/select-toys"
+                    className="flex items-center space-x-8 p-10 border-4 border-dashed border-dark/5 rounded-[3rem] text-dark/20 hover:border-primary/20 hover:text-primary transition-all group"
+                  >
+                    <div className="w-16 h-16 bg-dark/5 rounded-2xl flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                      <ShoppingBag size={28} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-black tracking-tight group-hover:text-dark transition-colors">Your box isn't full yet.</p>
+                      <p className="font-bold text-sm">Add {currentPlan.toyCount - selectedToys.length} more toys to maximize your subscription.</p>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Checkout */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-32 space-y-8">
+              <div className="bg-dark text-white rounded-[3rem] p-12 shadow-2xl relative overflow-hidden group">
+                {/* Background Blobs */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 blur-[60px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-black mb-10 tracking-tight">Order Summary</h3>
+                  
+                  <div className="space-y-6 mb-12">
+                    <div className="flex justify-between items-center pb-6 border-b border-white/5">
+                      <span className="text-white/40 font-bold text-sm">Month 1 Subscription</span>
+                      <span className="font-black text-lg">₹{planPrice}</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/40 font-bold">GST (18%)</span>
+                        <span className="font-black">₹{gstAmount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-white/40 font-bold">Security Deposit</span>
+                          <span className="text-[10px] font-black text-accent uppercase tracking-widest bg-accent/10 px-2 py-0.5 rounded-lg">Refundable</span>
+                        </div>
+                        <span className="font-black">₹{depositAmount}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-6 border-t border-white/5">
+                      <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
+                        <span className="text-white/20">Shipping & Delivery</span>
+                        <span className="text-accent underline decoration-accent underline-offset-4 decoration-dashed">Included</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
+                        <span className="text-white/20">Sanitization Fee</span>
+                        <span className="text-accent underline decoration-accent underline-offset-4 decoration-dashed">Waived</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-10 flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-1">Total Amount</p>
+                        <span className="text-5xl font-black text-white tracking-tighter">₹{totalAmount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handlePayment}
+                    disabled={selectedToys.length === 0 || isProcessing}
+                    className="w-full py-6 bg-primary text-white font-black rounded-2xl shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-70 group/pay overflow-hidden relative"
+                  >
+                    <span className="relative z-10 transition-transform group-hover/pay:-translate-y-10">
+                      {isProcessing ? 'Processing...' : 'Complete Payment'}
+                    </span>
+                    <span className="absolute inset-0 flex items-center justify-center translate-y-10 group-hover/pay:translate-y-0 transition-transform z-10">
+                      <ArrowRight size={24} />
+                    </span>
+                    {isProcessing && <Loader2 className="animate-spin relative z-10 ml-2" size={20} />}
+                  </button>
+
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                      <ShieldCheck size={14} className="text-accent" />
+                      <span>Inspected</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                      <Truck size={14} className="text-secondary" />
+                      <span>Express</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="glass rounded-[2rem] p-8 text-center border border-dark/5">
+                <p className="text-xs font-black text-dark/30 uppercase tracking-widest mb-2">Need Help?</p>
+                <p className="text-lg font-black text-dark leading-none italic">+1 (555) PLAY-PRO</p>
+              </div>
             </div>
           </div>
         </div>

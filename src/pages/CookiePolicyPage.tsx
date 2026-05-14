@@ -1,88 +1,102 @@
 
 import React from 'react';
 import { Cookie, ShieldCheck, BarChart3, Settings, Info } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export const CookiePolicyPage = () => {
   return (
-    <div className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+    <div className="bg-canvas pt-32 pb-40 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center p-3 bg-indigo-50 rounded-2xl text-indigo-600 mb-6 font-bold">
-            <Cookie className="mr-2" size={20} />
-            Cookie Settings
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-24"
+        >
+          <div className="inline-flex items-center justify-center px-4 py-2 bg-dark/5 rounded-full text-dark/40 mb-8 font-black text-[10px] uppercase tracking-[0.2em]">
+            <Cookie className="mr-3" size={14} />
+            Data Preferences
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-4">Cookie Policy</h1>
-          <p className="text-gray-500 font-medium">Last updated: May 2024</p>
-        </div>
+          <h1 className="text-5xl md:text-7xl font-black text-dark tracking-tighter mb-6 italic">Cookie Policy<span className="text-secondary">.</span></h1>
+          <p className="text-dark/30 font-bold uppercase tracking-widest text-xs">Last updated: May 2024</p>
+        </motion.div>
 
-        <div className="space-y-12 text-gray-600 leading-relaxed">
-          <section className="bg-indigo-50 p-8 rounded-3xl border border-indigo-100 flex items-start space-x-6">
-            <div className="bg-white p-3 rounded-xl shadow-sm text-indigo-600 shrink-0">
-              <Info size={24} />
+        <div className="space-y-20 text-dark/50 font-medium leading-relaxed">
+          <section className="bg-white p-12 rounded-[3.5rem] border border-dark/5 flex flex-col md:flex-row items-center gap-10 shadow-sm relative overflow-hidden group">
+            <div className="w-20 h-20 bg-canvas rounded-[1.5rem] flex items-center justify-center text-secondary relative z-10 shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-500">
+              <Info size={32} />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">What are cookies?</h2>
-              <p className="text-gray-600">
-                Cookies are small text files that are placed on your computer or mobile device when you visit a website. They are widely used to make websites work more efficiently and provide information to the owners of the site.
+            <div className="relative z-10">
+              <h2 className="text-2xl font-black text-dark mb-4 tracking-tight italic">Digital Fingerprints?</h2>
+              <p className="text-dark/50 leading-relaxed">
+                Cookies are tiny metadata units placed on your device to ensure our vault remains synchronized and your preferences are remembered across sessions.
               </p>
             </div>
+            {/* Background Blob */}
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-secondary/5 blur-[60px] rounded-full group-hover:scale-125 transition-transform duration-1000" />
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-              <ShieldCheck className="text-indigo-600 mr-3" />
-              Types of Cookies We Use
-            </h2>
+            <div className="flex items-center space-x-5 mb-10">
+              <ShieldCheck className="text-secondary" size={32} />
+              <h2 className="text-3xl font-black text-dark tracking-tight italic">Taxonomy of Cookies.</h2>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="border border-gray-100 p-6 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600">
-                    <Settings size={20} />
+              {[
+                { 
+                  icon: Settings, 
+                  color: "bg-emerald-500", 
+                  bg: "bg-emerald-5", 
+                  title: "Infrastructural", 
+                  desc: "Necessary for the core engine: auth sessions, selection drawers, and checkout secure-tunnels.",
+                  active: true 
+                },
+                { 
+                  icon: BarChart3, 
+                  color: "bg-blue-500", 
+                  bg: "bg-blue-5", 
+                  title: "Intelligence", 
+                  desc: "Anonymized heatmaps and traffic patterns that help us calibrate our logistics and inventory." 
+                }
+              ].map((card, i) => (
+                <div key={i} className="bg-white p-10 rounded-[2.5rem] border border-dark/5 relative overflow-hidden group">
+                  <div className={`w-12 h-12 ${card.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <card.icon size={24} className={`text-dark`} />
                   </div>
-                  <h3 className="font-bold text-gray-900">Essential Cookies</h3>
+                  <h3 className="text-xl font-black text-dark mb-4 tracking-tight">{card.title}</h3>
+                  <p className="text-sm leading-relaxed mb-8">{card.desc}</p>
+                  {card.active && (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Protocol Active</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  These are necessary for the website to function. They include, for example, cookies that enable you to log into secure areas, use a shopping cart, or make use of e-billing services.
-                </p>
-                <p className="mt-4 text-xs font-bold text-emerald-600 uppercase tracking-widest">Always Active</p>
-              </div>
-
-              <div className="border border-gray-100 p-6 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                    <BarChart3 size={20} />
-                  </div>
-                  <h3 className="font-bold text-gray-900">Analytics Cookies</h3>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  They allow us to recognize and count the number of visitors and to see how visitors move around our website when they are using it. This helps us improve the way our website works.
-                </p>
-              </div>
+              ))}
             </div>
           </section>
 
-          <section className="prose prose-indigo max-w-none">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Managing Your Cookies</h2>
-            <p className="mb-4">
-              Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set, visit <a href="https://www.aboutcookies.org" className="text-indigo-600 font-bold hover:underline">www.aboutcookies.org</a> or <a href="https://www.allaboutcookies.org" className="text-indigo-600 font-bold hover:underline">www.allaboutcookies.org</a>.
+          <section className="bg-dark p-12 md:p-20 rounded-[4rem] text-white">
+            <h2 className="text-3xl font-black tracking-tight mb-8 italic">Managing Preference.</h2>
+            <p className="text-white/40 text-lg mb-10 max-w-2xl italic leading-relaxed">
+              You maintain total sovereignty over your digital trail. Most standard-issue browsers provide the toggle to prune or purge these files.
             </p>
-            <p>
-              Find out how to manage cookies on popular browsers:
-            </p>
-            <ul className="list-disc ml-6 mt-4 space-y-2 text-sm">
-              <li>Google Chrome</li>
-              <li>Microsoft Edge</li>
-              <li>Mozilla Firefox</li>
-              <li>Apple Safari</li>
-            </ul>
+            <div className="flex flex-wrap gap-4">
+              {['Chrome', 'Safari', 'Firefox', 'Edge'].map((browser, i) => (
+                <div key={i} className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-widest">
+                  {browser} Configuration
+                </div>
+              ))}
+            </div>
           </section>
 
-          <section className="pt-12 border-t border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Questions?</h2>
-            <p className="text-sm">
-              If you have any questions about our use of cookies, please email us at 
-              <a href="mailto:privacy@playpro.com" className="text-indigo-600 font-bold ml-2 hover:underline">privacy@playpro.com</a>.
-            </p>
+          <section className="pt-20 border-t border-dark/5 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div>
+              <h2 className="text-2xl font-black text-dark mb-2 tracking-tight">Support & Queries</h2>
+              <p className="text-sm font-medium">Need more technical context on our cookies?</p>
+            </div>
+            <a href="mailto:privacy@playpro.com" className="px-10 py-5 bg-canvas border border-dark/10 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-dark hover:text-white transition-all">
+              privacy@playpro.com
+            </a>
           </section>
         </div>
       </div>
