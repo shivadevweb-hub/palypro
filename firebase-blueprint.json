@@ -2,22 +2,41 @@
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "User profile with plan and selected toys",
+      "description": "User profile and subscription settings",
       "type": "object",
       "properties": {
         "email": { "type": "string" },
         "name": { "type": "string" },
+        "photoURL": { "type": "string" },
         "isAdmin": { "type": "boolean" },
         "currentPlanId": { "type": "string" },
         "selectedToyIds": { "type": "array", "items": { "type": "string" } },
         "address": { "type": "string" },
-        "phone": { "type": "string" }
+        "phone": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "name", "isAdmin", "selectedToyIds"]
+      "required": ["email", "name", "isAdmin"]
+    },
+    "Toy": {
+      "title": "Toy Asset",
+      "description": "Premium toy available for lease",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "ageRange": { "type": "string" },
+        "image": { "type": "string" },
+        "points": { "type": "integer" },
+        "available": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "points", "image"]
     },
     "Order": {
-      "title": "Rental Order",
-      "description": "Information about a toy rental/swap cycle",
+      "title": "Lease Order",
+      "description": "A toy lease order",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
@@ -26,45 +45,26 @@
         "toyNames": { "type": "array", "items": { "type": "string" } },
         "status": { "type": "string", "enum": ["pending", "delivered", "swapped"] },
         "shippingAddress": { "type": "string" },
+        "phone": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "deliveryDate": { "type": "string", "format": "date-time" },
         "expiryDate": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "toyIds", "status", "shippingAddress", "createdAt"]
-    },
-    "Toy": {
-      "title": "Toy Document",
-      "description": "Toy details",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "image": { "type": "string" },
-        "ageRange": { "type": "string" },
-        "category": { "type": "string" },
-        "shortDescription": { "type": "string" },
-        "fullDescription": { "type": "string" },
-        "brand": { "type": "string" },
-        "available": { "type": "boolean" }
-      },
-      "required": ["name", "image", "ageRange", "category", "shortDescription", "fullDescription", "brand", "available"]
+      "required": ["userId", "toyIds", "status"]
     }
   },
   "firestore": {
-    "users/{userId}": {
+    "/users/{userId}": {
       "schema": "User",
-      "description": "Private user profiles"
+      "description": "User profiles"
     },
-    "toys/{toyId}": {
+    "/toys/{toyId}": {
       "schema": "Toy",
-      "description": "Public toy collection"
+      "description": "Toy catalog"
     },
-    "orders/{orderId}": {
+    "/orders/{orderId}": {
       "schema": "Order",
-      "description": "Rental and delivery orders"
-    },
-    "admins/{userId}": {
-      "schema": { "type": "object", "properties": { "email": { "type": "string" } } },
-      "description": "Admin list"
+      "description": "Lease orders"
     }
   }
 }

@@ -299,9 +299,13 @@ export const AdminPage = () => {
             >
               <div className="flex items-center space-x-4 mb-6">
                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-inner ${
-                  dbStatus === 'connected' ? 'bg-accent/10 text-accent' : 'bg-secondary/10 text-secondary'
+                  dbStatus === 'connected' ? 'bg-accent/10 text-accent' : 
+                  dbStatus === 'connecting' ? 'bg-yellow-500/10 text-yellow-600 animate-pulse' :
+                  'bg-secondary/10 text-secondary'
                 }`}>
-                  {dbStatus === 'connected' ? '● Core Online' : '○ Synchronizing Assets'}
+                  {dbStatus === 'connected' ? '● Core Online' : 
+                   dbStatus === 'connecting' ? '○ Syncing...' : 
+                   '○ Offline Mode'}
                 </span>
               </div>
               <h1 className="text-6xl md:text-8xl font-black text-dark tracking-tighter leading-none mb-4 italic">

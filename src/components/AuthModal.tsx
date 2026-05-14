@@ -9,7 +9,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { signInWithEmail, signUpWithEmail, login, dbStatus } = usePlay();
+  const { signInWithEmail, signUpWithEmail, login } = usePlay();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,8 +26,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await login();
       onClose();
     } catch (err: any) {
-      console.error("AuthModal: Google login error", err);
-      setError(err.message || "Google login was interrupted or failed. Please try again.");
+      console.error("AuthModal: Login error", err);
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -35,10 +35,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (dbStatus === 'disconnected') {
-      setError("Database is not connected. Please check Settings > Environment Variables.");
-      return;
-    }
     setLoading(true);
     setError(null);
 
@@ -96,13 +92,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {dbStatus === 'disconnected' && (
-                <div className="bg-accent/5 border border-accent/10 p-5 rounded-3xl mb-8 flex items-start space-x-4">
-                  <ShieldCheck className="text-accent shrink-0 mt-1" size={20} />
+              {isLogin && (
+                <div className="bg-primary/5 border border-primary/10 p-5 rounded-3xl mb-4 flex items-start space-x-4">
+                  <ShieldCheck className="text-primary shrink-0 mt-1" size={20} />
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-accent mb-1">Demo Access</p>
+                    <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Manual Admin Access</p>
                     <p className="text-xs text-dark/60 font-medium leading-relaxed">
-                      Use <span className="text-dark font-black">admin@playpro.com</span> / <span className="text-dark font-black">adminPassword123</span>
+                      Email: <span className="text-dark font-black">admin@playpro.com</span><br/>
+                      Pass: <span className="text-dark font-black">admin123</span>
                     </p>
                   </div>
                 </div>

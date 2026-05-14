@@ -13,15 +13,14 @@ import {
 import { 
   doc, 
   getDoc, 
-  getDocFromServer,
   setDoc, 
   updateDoc, 
   collection, 
   onSnapshot, 
   query, 
   orderBy,
-  addDoc,
-  deleteDoc
+  deleteDoc,
+  getDocFromServer
 } from 'firebase/firestore';
 
 interface User {
@@ -65,6 +64,7 @@ interface PlayContextType {
   clearSelection: () => Promise<void>;
   placeOrder: () => Promise<void>;
   markOrderAsDelivered: (orderId: string) => Promise<void>;
+  seedDatabase: () => Promise<void>;
   addToy: (toy: Partial<Toy>) => Promise<void>;
   updateToy: (toy: Toy) => Promise<void>;
   deleteToy: (id: string) => Promise<void>;
@@ -76,7 +76,7 @@ const PlayContext = createContext<PlayContextType | undefined>(undefined);
 
 export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [toys, setToys] = useState<Toy[]>(TOYS);
+  const [toys, setToys] = useState<Toy[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [selectedToys, setSelectedToys] = useState<Toy[]>([]);
@@ -87,20 +87,14 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     async function testConnection() {
       try {
-        // Use getDoc instead of getDocFromServer for a smoother experience
-        // Even if the document doesn't exist, as long as it doesn't throw a connection error, we're good
         await getDoc(doc(db, 'test', 'connection'));
         setDbStatus('connected');
         console.log("🔥 Firebase: Connected");
       } catch (error: any) {
         console.warn("⚠️ Firebase: Connection check failed:", error.code, error.message);
-        
-        // These codes mean we are connected, but permissions or other factors blocked the specific read
         if (error.code === 'permission-denied' || error.code === 'not-found' || error.code === 'failed-precondition') {
           setDbStatus('connected');
         } else if (error.message?.includes('offline')) {
-          // If offline, we might be in a restricted environment (like an iframe)
-          // We'll fallback to connected but log it
           console.log("ℹ️ Firebase: Operating in offline mode");
           setDbStatus('connected');
         } else {
@@ -125,7 +119,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const adminEmails = [
             'adminplaypro@gmail.com',
             'admin@playpro.com',
-            'shivadevweb@gmail.com' // Developer admin
+            'shivadevweb@gmail.com'
           ];
           let isAdmin = adminEmails.includes(firebaseUser.email?.toLowerCase() || '');
           
@@ -192,7 +186,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCurrentPlan(plan || null);
               }
             } else {
-              // If profile doesn't exist yet but we just created it, snap might be empty at first
               setUser({
                 id: firebaseUser.uid,
                 email: firebaseUser.email || '',
@@ -212,13 +205,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(false);
         }
       } else {
-        // If we are NOT a firebase user, check if we are a manual admin
-        if (user?.id === 'manual-admin-id') {
-          console.log("Manual Admin is still active");
-          setIsLoading(false);
-          return;
-        }
-        
         console.log("Auth state changed: User signed out");
         if (unsubscribeProfile) unsubscribeProfile();
         setUser(null);
@@ -232,7 +218,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribeAuth();
       if (unsubscribeProfile) (unsubscribeProfile as any)();
     };
-  }, [user?.id === 'manual-admin-id']);
+  }, []);
 
   // Fetch Toys Real-time
   useEffect(() => {
@@ -252,12 +238,10 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: doc.id,
             ...doc.data()
           })) as Toy[];
-          
-          // If we are connected to DB, we use DB data (even if empty)
           setToys(toysData);
         }, (error) => {
           if (unmounted) return;
-          console.warn("Firestore Toys fetch failed, using local library:", error.message);
+          console.warn("Firestore Toys fetch failed:", error.message);
         });
 
         return unsubscribe;
@@ -273,7 +257,7 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [dbStatus]);
 
-  // Fetch Orders Real-time (Admin sees all, User sees own)
+  // Fetch Orders Real-time
   useEffect(() => {
     if (!user) {
       setOrders([]);
@@ -281,8 +265,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const ordersRef = collection(db, 'orders');
-    // For simplicity, we filter in memory if not admin, but ideally we use a firestore query
-    // Since we secured it in rules, user can only read their own if not admin
     const q = query(ordersRef, orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -297,8 +279,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setOrders(ordersData.filter(o => o.userId === user.id));
       }
     }, (error) => {
-      // Users might get permission error on 'list' if not admin and trying to list all
-      // But firestore list rules should allow it if we filter on client and rules enforce index-like security
       console.warn("Order fetch warning:", error.message);
     });
 
@@ -320,27 +300,24 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithGoogle();
     } catch (err: any) {
       if (err.code === 'auth/configuration-not-found') {
-        throw new Error("Google Sign-In is not enabled for this project yet. Please ask the developer to enable it in the Firebase Console.");
+        throw new Error("Google Sign-In is not enabled for this project yet.");
       }
       if (err.code === 'auth/popup-blocked') {
-        throw new Error("Login popup was blocked. Please allow popups for this site and try again.");
+        throw new Error("Login popup was blocked.");
       }
-      console.error("Google sign-in error", err);
       throw err;
     }
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    // Manual Admin Login Bypass (for Demo/Review)
     const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@playpro.com';
-    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'adminPassword123';
+    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 
     if (email === adminEmail && password === adminPass) {
-      console.log("⚡ Success: Manual Admin Login Triggered");
       setUser({
         id: 'manual-admin-id',
         email: adminEmail,
-        name: 'PlayPro Admin',
+        name: 'System Admin',
         isAdmin: true,
         selectedToyIds: [],
       });
@@ -351,10 +328,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithEmailAndPassword(auth, email, password);
       return { error: null };
     } catch (err: any) {
-      // If we are disconnected, give a helpful hint
-      if (dbStatus === 'disconnected') {
-        return { error: new Error("Database is in Demo Mode. Try using the default admin credentials shared by the system.") };
-      }
       return { error: err };
     }
   };
@@ -370,7 +343,13 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (e) {
+      setUser(null);
+    }
+    setCurrentPlan(null);
+    setSelectedToys([]);
   };
 
   const setPlan = async (plan: Plan) => {
@@ -412,7 +391,6 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const profileRef = doc(db, 'users', user.id);
     try {
       await updateDoc(profileRef, { selectedToyIds: newToyIds });
-      setUser(prev => prev ? { ...prev, selectedToyIds: newToyIds } : null);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${user.id}`);
     }
@@ -440,11 +418,12 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'pending',
       shippingAddress: user.address,
       phone: user.phone,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     };
 
     try {
-      await addDoc(collection(db, 'orders'), orderData);
+      const ordersRef = collection(db, 'orders');
+      await setDoc(doc(ordersRef, Math.random().toString(36).substr(2, 9)), orderData);
       await clearSelection();
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'orders');
@@ -452,42 +431,23 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const seedDatabase = async () => {
-    if (!user?.isAdmin) return;
     const { TOYS: mockToys } = await import('./data/mockData');
-    
-    // Clear current local toys if we're connected to show a fresh sync
-    if (dbStatus === 'connected') {
-      setToys([]);
-    }
-
     for (const toy of mockToys) {
       await addToy(toy);
     }
   };
 
   const markOrderAsDelivered = async (orderId: string) => {
-    if (!user?.isAdmin) return;
-    
-    const now = new Date();
+    const now = new Date().toISOString();
     const expiry = new Date();
-    expiry.setDate(now.getDate() + 30); // Default 30 days play time
-
-    if (dbStatus === 'disconnected' || user?.id === 'manual-admin-id') {
-      setOrders(prev => prev.map(o => o.id === orderId ? {
-        ...o,
-        status: 'delivered',
-        deliveryDate: now,
-        expiryDate: expiry
-      } : o));
-      return;
-    }
+    expiry.setDate(expiry.getDate() + 30);
 
     const orderRef = doc(db, 'orders', orderId);
     try {
       await updateDoc(orderRef, {
         status: 'delivered',
         deliveryDate: now,
-        expiryDate: expiry
+        expiryDate: expiry.toISOString()
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `orders/${orderId}`);
@@ -496,58 +456,37 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToy = async (toy: Partial<Toy>) => {
     const id = Math.random().toString(36).substr(2, 9);
-    const newToyData = {
+    const newToy = {
       ...toy,
       id: id,
       available: toy.available ?? true,
       createdAt: new Date().toISOString()
     } as Toy;
 
-    // Optimistic Update
-    setToys(prev => [newToyData, ...prev]);
-
     try {
-      if (dbStatus === 'connected') {
-        const { id: _, ...dataToSave } = newToyData; // Don't save ID in doc body twice if ID is doc name
-        await setDoc(doc(db, 'toys', id), dataToSave);
-        console.log("Toy saved to Firestore:", id);
-        return;
-      }
+      const { id: _, ...dataToSave } = newToy;
+      await setDoc(doc(db, 'toys', id), dataToSave);
     } catch (error) {
-      console.warn("Firestore add failed, kept local state:", error);
+      console.warn("Firestore add failed:", error);
     }
   };
 
   const updateToy = async (toy: Toy) => {
-    // Optimistic Update
-    setToys(prev => prev.map(t => t.id === toy.id ? toy : t));
-
     const { id, ...data } = toy;
     const toyRef = doc(db, 'toys', id);
     try {
-      if (dbStatus === 'connected') {
-        await updateDoc(toyRef, data);
-        console.log("Toy updated in Firestore:", id);
-        return;
-      }
+      await updateDoc(toyRef, data);
     } catch (error) {
-      console.warn("Firestore update failed, kept local state:", error);
+      console.warn("Firestore update failed:", error);
     }
   };
 
   const deleteToy = async (id: string) => {
-    // Optimistic Update
-    setToys(prev => prev.filter(t => t.id !== id));
-
     const toyRef = doc(db, 'toys', id);
     try {
-      if (dbStatus === 'connected') {
-        await deleteDoc(toyRef);
-        console.log("Toy deleted from Firestore:", id);
-        return;
-      }
+      await deleteDoc(toyRef);
     } catch (error) {
-      console.warn("Firestore delete failed, kept local state:", error);
+      console.warn("Firestore delete failed:", error);
     }
   };
 

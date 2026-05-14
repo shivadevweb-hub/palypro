@@ -1,10 +1,9 @@
 {
-  "projectId": "gen-lang-client-0330674272",
-  "appId": "1:632923575445:web:48391e9b6e2ebba25a779c",
-  "apiKey": "AIzaSyD7pvy8IzawBNx1ZuLMf3qIJJ5kZF6Mavc",
-  "authDomain": "gen-lang-client-0330674272.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-938e1910-08d9-476c-b413-b65c47defbaa",
-  "storageBucket": "gen-lang-client-0330674272.firebasestorage.app",
-  "messagingSenderId": "632923575445",
-  "measurementId": ""
+  "apiKey": "AIzaSyB50F_DDfoIyVmi1vXcHqmAB_MhRiWPyZo",
+  "authDomain": "connect-hub-ul8cc.firebaseapp.com",
+  "databaseURL": "https://connect-hub-ul8cc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "projectId": "connect-hub-ul8cc",
+  "storageBucket": "connect-hub-ul8cc.firebasestorage.app",
+  "messagingSenderId": "338900869262",
+  "appId": "1:338900869262:web:dd5c818377149783efa9df"
 }
