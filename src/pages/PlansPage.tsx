@@ -8,7 +8,7 @@ import { AuthModal } from '../components/AuthModal';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const PlansPage = () => {
-  const { user, currentPlan, setPlan } = usePlay();
+  const { user, currentPlan, purchasePlan } = usePlay();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSettingPlan, setIsSettingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -21,8 +21,11 @@ export const PlansPage = () => {
     }
     setIsSettingPlan(plan.id);
     try {
-      await setPlan(plan);
+      await purchasePlan(plan);
       navigate('/select-toys');
+    } catch (err: any) {
+      // Optional: Show error to user
+      console.error(err);
     } finally {
       setIsSettingPlan(null);
     }

@@ -10,6 +10,7 @@ import {
   signOut,
   updateProfile
 } from 'firebase/auth';
+import { safeFetch } from './lib/safeFetch';
 import { 
   doc, 
   getDoc, 
@@ -57,7 +58,7 @@ interface PlayContextType {
   toys: Toy[];
   orders: Order[];
   currentPlan: Plan | null;
-  setPlan: (plan: Plan) => Promise<void>;
+  purchasePlan: (plan: Plan) => Promise<void>;
   updateUserAddress: (name: string, address: string, phone: string) => Promise<void>;
   selectedToys: Toy[];
   toggleToySelection: (toy: Toy) => Promise<void>;
@@ -349,16 +350,58 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedToys([]);
   };
 
-  const setPlan = async (plan: Plan) => {
-    if (!user) return;
-    const profileRef = doc(db, 'users', user.id);
+  const purchasePlan = async (plan: Plan) => {
+    if (!user) {
+      throw new Error("You must be logged in to purchase a plan.");
+    }
+
     try {
-      await updateDoc(profileRef, { 
-        currentPlanId: plan.id, 
-        selectedToyIds: [] 
+      // 1. Create order on backend
+      const order = await safeFetch("/api/payment/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: plan.price,
+          currency: "INR",
+          receipt: `plan_${plan.id}_${user.id}_${Date.now()}`
+        })
       });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `users/${user.id}`);
+
+      // 2. Trigger Razorpay Checkout
+      const { processPayment } = await import("./lib/razorpay");
+      
+      const paymentResponse: any = await processPayment({
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        name: "PlayPro Subscription",
+        description: `Subscription to ${plan.name} Plan`,
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: user.phone || ""
+        },
+        theme: {
+          color: "#FF4500" // Primary color
+        }
+      });
+
+      // 3. Update profile if success
+      if (paymentResponse.razorpay_payment_id) {
+        const profileRef = doc(db, 'users', user.id);
+        await updateDoc(profileRef, { 
+          currentPlanId: plan.id, 
+          selectedToyIds: [],
+          lastPaymentId: paymentResponse.razorpay_payment_id,
+          lastOrderId: paymentResponse.razorpay_order_id,
+          updatedAt: new Date().toISOString()
+        });
+        
+        console.log("Plan updated successfully after payment.");
+      }
+    } catch (error: any) {
+      console.error("Purchase failed:", error);
+      throw error;
     }
   };
 
@@ -489,7 +532,8 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <PlayContext.Provider value={{
-      user, login, signInWithEmail, signUpWithEmail, logout, toys, orders, currentPlan, setPlan,
+      user, login, signInWithEmail, signUpWithEmail, logout, toys, orders, currentPlan, 
+      purchasePlan,
       updateUserAddress, selectedToys, toggleToySelection, clearSelection, 
       placeOrder, markOrderAsDelivered, seedDatabase,
       addToy, updateToy, deleteToy, isLoading, dbStatus

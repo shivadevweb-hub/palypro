@@ -4,11 +4,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, ChevronLeft, CreditCard, Truck, ShieldCheck, CheckCircle, Package, Loader2, MapPin, Phone, Sparkles, AlertCircle, ArrowRight, Box } from 'lucide-react';
 import { usePlay } from '../PlayContext';
 import { motion } from 'motion/react';
+import { processPayment } from '../lib/razorpay';
+import { safeFetch } from '../lib/safeFetch';
 
 export const CartPage = () => {
   const { selectedToys, currentPlan, user, clearSelection, updateUserAddress, placeOrder } = usePlay();
   const [isOrdered, setIsOrdered] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
   const [address, setAddress] = useState(user?.address || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [shippingName, setShippingName] = useState(user?.name || '');
@@ -38,72 +41,58 @@ export const CartPage = () => {
       await updateUserAddress(shippingName, address, phone);
     }
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    
-    // Check if Razorpay SDK is loaded
-    if (typeof (window as any).Razorpay === 'undefined') {
-      if (confirm(`Razorpay script not loaded. Would you like to simulate a successful payment?`)) {
-        await placeOrder();
-        setIsOrdered(true);
-      }
-      return;
-    }
-
     setIsProcessing(true);
+    setProcessingStatus('Creating Secure Order...');
 
     try {
-      const response = await fetch("/api/payment/order", {
+      console.log("Initiating payment for amount:", totalAmount);
+      const order = await safeFetch("/api/payment/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: totalAmount,
           currency: "INR",
-          receipt: `order_rcptid_${Math.floor(Math.random() * 1000)}`
+          receipt: `order_${Date.now()}_${user.id.slice(0, 5)}`
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create payment order");
-      }
+      console.log("Razorpay Order Created:", order.id);
+      
+      setProcessingStatus('Waiting for Payment...');
 
-      const order = await response.json();
-
-      const options = {
-        key: razorpayKey,
+      const paymentResponse: any = await processPayment({
         amount: order.amount,
         currency: order.currency,
         name: "PlayPro Toy Rental",
         description: `${currentPlan?.name} Subscription`,
-        image: "https://www.google.com/favicon.ico",
         order_id: order.id,
-        handler: async function (response: any) {
-          await placeOrder();
-          setIsOrdered(true);
-          setIsProcessing(false);
-        },
         prefill: {
-          name: user.name,
+          name: shippingName || user.name,
           email: user.email,
-          contact: phone
+          contact: phone || user.phone || ""
         },
-        theme: { color: "#FF7A59" },
-        modal: {
-          ondismiss: function() {
-            setIsProcessing(false);
-          }
-        }
-      };
+        theme: { color: "#FF7A59" }
+      });
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      console.log("Payment Successful:", paymentResponse.razorpay_payment_id);
+      setProcessingStatus('Finalizing Your Box...');
 
+      await placeOrder();
+      
+      setIsOrdered(true);
     } catch (error: any) {
-      if (confirm(`Payment gateway couldn't be initialized: ${error.message}. \n\nWould you like to simulate a successful payment for this demo?`)) {
-        await placeOrder();
-        setIsOrdered(true);
+      console.error("Payment/Order Error:", error);
+      
+      let errorMessage = error.message || "An unexpected error occurred during payment.";
+      
+      if (error.message === "Payment cancelled by user") {
+        // No alert for cancellation, just reset
+      } else {
+        alert(`Payment Error: ${errorMessage}`);
       }
+    } finally {
       setIsProcessing(false);
+      setProcessingStatus('');
     }
   };
 
@@ -362,12 +351,14 @@ export const CartPage = () => {
                     disabled={selectedToys.length === 0 || isProcessing}
                     className="w-full py-6 bg-primary text-white font-black rounded-2xl shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-70 group/pay overflow-hidden relative"
                   >
-                    <span className="relative z-10 transition-transform group-hover/pay:-translate-y-10">
-                      {isProcessing ? 'Processing...' : 'Complete Payment'}
+                    <span className={`relative z-10 transition-transform ${isProcessing ? '' : 'group-hover/pay:-translate-y-10'}`}>
+                      {isProcessing ? (processingStatus || 'Processing...') : 'Complete Payment'}
                     </span>
-                    <span className="absolute inset-0 flex items-center justify-center translate-y-10 group-hover/pay:translate-y-0 transition-transform z-10">
-                      <ArrowRight size={24} />
-                    </span>
+                    {!isProcessing && (
+                      <span className="absolute inset-0 flex items-center justify-center translate-y-10 group-hover/pay:translate-y-0 transition-transform z-10">
+                        <ArrowRight size={24} />
+                      </span>
+                    )}
                     {isProcessing && <Loader2 className="animate-spin relative z-10 ml-2" size={20} />}
                   </button>
 

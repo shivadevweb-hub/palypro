@@ -1,20 +1,39 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import { fileURLToPath } from "url";
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
+import cors from "cors";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+// Load environment variables
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = 3000; // Hardcoded per platform guidelines
 
+  app.use(cors());
   app.use(express.json());
+
+    // Health check for deployment monitoring
+    app.get("/api/health", (req, res) => {
+      res.json({ status: "ok", environment: isProduction ? "production" : "development" });
+    });
+
+    // Global Error Handler for API
+    const apiErrorHandler = (err: any, req: any, res: any, next: any) => {
+      console.error("Express API Error:", err);
+      if (res.headersSent) {
+        return next(err);
+      }
+      const statusCode = err.status || err.statusCode || 500;
+      res.status(statusCode).json({ 
+        error: err.message || "Internal Server Error",
+        details: isProduction ? undefined : err.stack
+      });
+    };
 
   // Razorpay instance
   let razorpay: Razorpay | null = null;
@@ -24,8 +43,15 @@ async function startServer() {
       const key_id = process.env.VITE_RAZORPAY_KEY_ID;
       const key_secret = process.env.RAZORPAY_KEY_SECRET;
       
+      if (!isProduction) {
+        console.log("Checking Razorpay Env Vars (Dev Mode):", { 
+          key_id_exists: !!key_id, 
+          key_secret_exists: !!key_secret 
+        });
+      }
+      
       if (!key_id || !key_secret) {
-        throw new Error("Razorpay credentials missing in environment variables.");
+        throw new Error(`Razorpay credentials missing. Please set VITE_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment.`);
       }
       
       razorpay = new Razorpay({
@@ -37,27 +63,40 @@ async function startServer() {
   };
 
   // API Routes
-  app.post("/api/payment/order", async (req, res) => {
+  app.post("/api/payment/order", async (req, res, next) => {
+    console.log("POST /api/payment/order hit", { hasBody: !!req.body, amount: req.body?.amount });
     try {
       const { amount, currency = "INR", receipt } = req.body;
       
-      if (!amount) {
+      if (amount === undefined || amount === null) {
         return res.status(400).json({ error: "Amount is required" });
       }
 
+      console.log("Initializing Razorpay...");
       const rzp = getRazorpay();
+      
       const options = {
-        amount: Math.round(amount * 100), // Amount in paise
+        amount: Math.round(Number(amount) * 100), // Amount in paise
         currency,
         receipt: receipt || `receipt_${Date.now()}`,
       };
 
+      console.log("Creating Razorpay Order with options:", options);
       const order = await rzp.orders.create(options);
+      console.log("Order created successfully:", order.id);
       res.json(order);
     } catch (error: any) {
-      console.error("Razorpay Order Error:", error);
-      res.status(500).json({ error: error.message || "Failed to create Razorpay order" });
+      console.error("Razorpay Order Route Error:", error);
+      next(error); 
     }
+  });
+
+  // Apply error handler after API routes
+  app.use("/api", apiErrorHandler);
+
+  // 404 handler for any unmatched /api routes
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.originalUrl}` });
   });
 
   // Vite middleware for development
