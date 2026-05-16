@@ -28,7 +28,7 @@ export async function signInWithGoogle() {
       throw new Error("Login was cancelled.");
     } else if (error.code === 'auth/unauthorized-domain') {
       const currentHost = window.location.hostname;
-      throw new Error(`This domain (${currentHost}) is not authorized for Google Sign-In. Please add "${currentHost}" to your Firebase Console > Authentication > Settings > Authorized domains.`);
+      throw new Error(`Domain "${currentHost}" not authorized. 1. Go to Firebase Console > Auth > Settings. 2. Add "${currentHost}". 3. Also check Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Web Client.`);
     }
     
     throw error;
