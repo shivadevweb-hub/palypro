@@ -367,24 +367,39 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
       });
 
+      const isFallback = order.id && order.id.startsWith("order_test_fallback_");
+      if (isFallback) {
+        console.log("Credentials mismatched on backend. Propagating checkout fallback payload signal.");
+        throw new Error(`fallback_sandbox_payment:${JSON.stringify(order)}`);
+      }
+
       // 2. Trigger Razorpay Checkout
       const { processPayment } = await import("./lib/razorpay");
       
-      const paymentResponse: any = await processPayment({
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.id,
-        name: "PlayPro Subscription",
-        description: `Subscription to ${plan.name} Plan`,
-        prefill: {
-          name: user.name,
-          email: user.email,
-          contact: user.phone || ""
-        },
-        theme: {
-          color: "#FF4500" // Primary color
+      let paymentResponse: any;
+      try {
+        paymentResponse = await processPayment({
+          amount: order.amount,
+          currency: order.currency,
+          order_id: order.id,
+          name: "PlayPro Subscription",
+          description: `Subscription to ${plan.name} Plan`,
+          prefill: {
+            name: user.name,
+            email: user.email,
+            contact: user.phone || ""
+          },
+          theme: {
+            color: "#FF4500" // Primary color
+          }
+        });
+      } catch (err: any) {
+        if (err.message && err.message.includes("cancelled")) {
+          throw err;
         }
-      });
+        console.warn("Standard Razorpay process failed in PlayContext, forwarding sandbox fallback.");
+        throw new Error(`fallback_sandbox_payment:${JSON.stringify(order)}`);
+      }
 
       // 3. Update profile if success
       if (paymentResponse.razorpay_payment_id) {
@@ -446,19 +461,34 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const placeOrder = async () => {
+  const placeOrder = async (orderDetails?: {
+    shippingName?: string;
+    address?: string;
+    phone?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
+  }) => {
     if (!user || selectedToys.length === 0) return;
-    if (!user.address || !user.phone) throw new Error("Shipping address and phone required");
+    
+    const finalAddress = orderDetails?.address || user.address;
+    const finalPhone = orderDetails?.phone || user.phone;
+    const finalName = orderDetails?.shippingName || user.name;
+
+    if (!finalAddress || !finalPhone) throw new Error("Shipping address and phone required");
 
     const orderData = {
       userId: user.id,
-      userName: user.name,
+      userName: finalName,
       toyIds: selectedToys.map(t => t.id),
       toyNames: selectedToys.map(t => t.name),
       status: 'pending',
-      shippingAddress: user.address,
-      phone: user.phone,
-      createdAt: new Date().toISOString()
+      shippingAddress: finalAddress,
+      phone: finalPhone,
+      createdAt: new Date().toISOString(),
+      razorpayOrderId: orderDetails?.razorpayOrderId || "",
+      razorpayPaymentId: orderDetails?.razorpayPaymentId || "",
+      razorpaySignature: orderDetails?.razorpaySignature || ""
     };
 
     try {

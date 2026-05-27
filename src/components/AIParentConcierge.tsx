@@ -113,10 +113,13 @@ export const AIParentConcierge = () => {
 
     try {
       // Build history from existing messages
-      const history = messages.map(m => ({
-        role: m.role,
-        parts: m.parts || [{ text: m.content }]
-      }));
+      // Gemini requires history to start with 'user' role or be empty
+      const history = messages
+        .filter((_, i) => i > 0 || messages[0].role === 'user') // Skip first message if it's from model
+        .map(m => ({
+          role: m.role,
+          parts: m.parts || [{ text: m.content }]
+        }));
 
       const model = genAI.getGenerativeModel({ 
         model: "gemini-1.5-flash",

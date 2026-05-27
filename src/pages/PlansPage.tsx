@@ -6,12 +6,16 @@ import { usePlay } from '../PlayContext';
 import { PLANS } from '../data/mockData';
 import { AuthModal } from '../components/AuthModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export const PlansPage = () => {
-  const { user, currentPlan, purchasePlan } = usePlay();
+  const { user, currentPlan } = usePlay();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSettingPlan, setIsSettingPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [modalErrorMessage, setModalErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleSelectPlan = async (plan: any) => {
@@ -19,13 +23,28 @@ export const PlansPage = () => {
       setIsAuthModalOpen(true);
       return;
     }
+
+    // If user already has this plan, just navigate to toy selection
+    if (currentPlan?.id === plan.id) {
+      navigate('/select-toys');
+      return;
+    }
+
     setIsSettingPlan(plan.id);
     try {
-      await purchasePlan(plan);
+      // Just select the plan directly in Firestore (payment occurs in Cart page)
+      const profileRef = doc(db, 'users', user.id);
+      await updateDoc(profileRef, { 
+        currentPlanId: plan.id, 
+        selectedToyIds: [],
+        updatedAt: new Date().toISOString()
+      });
+      console.log(`Plan ${plan.name} selected. Payment will be handled during checkout.`);
       navigate('/select-toys');
     } catch (err: any) {
-      // Optional: Show error to user
-      console.error(err);
+      console.error("Failed to select plan:", err);
+      setModalErrorMessage(err.message || "An unexpected error occurred during plan selection.");
+      setErrorModalOpen(true);
     } finally {
       setIsSettingPlan(null);
     }
