@@ -308,18 +308,29 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@playpro.com';
-    const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
-
-    if (email === adminEmail && password === adminPass) {
-      setUser({
-        id: 'manual-admin-id',
-        email: adminEmail,
-        name: 'System Admin',
-        isAdmin: true,
-        selectedToyIds: [],
+    try {
+      // 1. Check if it's the admin through the secure backend API endpoint, keeping secrets completely hidden from client bundle
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
-      return { error: null };
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.isAdmin) {
+          setUser({
+            id: 'manual-admin-id',
+            email: data.email,
+            name: 'System Admin',
+            isAdmin: true,
+            selectedToyIds: [],
+          });
+          return { error: null };
+        }
+      }
+    } catch (err) {
+      console.warn("Secure backend admin login check unavailable, checking firebase directly", err);
     }
 
     try {

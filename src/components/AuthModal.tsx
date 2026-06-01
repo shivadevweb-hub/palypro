@@ -92,18 +92,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {isLogin && (
-                <div className="bg-primary/5 border border-primary/10 p-5 rounded-3xl mb-4 flex items-start space-x-4">
-                  <ShieldCheck className="text-primary shrink-0 mt-1" size={20} />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Manual Admin Access</p>
-                    <p className="text-xs text-dark/60 font-medium leading-relaxed">
-                      Email: <span className="text-dark font-black">admin@playpro.com</span><br/>
-                      Pass: <span className="text-dark font-black">admin123</span>
-                    </p>
-                  </div>
-                </div>
-              )}
+
               
               <button
                 type="button"
