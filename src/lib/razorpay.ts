@@ -1,113 +1,107 @@
-
 export interface RazorpayOptions {
+  key: string;
   amount: number;
   currency: string;
   name: string;
   description: string;
+  image?: string;
   order_id: string;
+  handler: (response: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => void;
   prefill?: {
     name?: string;
     email?: string;
     contact?: string;
   };
-  handler: (response: any) => void;
+  notes?: Record<string, string>;
   theme?: {
     color?: string;
   };
+  modal?: {
+    ondismiss?: () => void;
+  };
 }
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-export const loadRazorpay = () => {
+export const loadRazorpay = (): Promise<boolean> => {
   return new Promise((resolve) => {
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => {
-      resolve(true);
-    };
-    script.onerror = () => {
-      resolve(false);
-    };
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
 };
 
-export const processPayment = async (options: Partial<RazorpayOptions>) => {
-  console.log("Razorpay: processPayment called", { order_id: options.order_id });
-
-  const isLoaded = window.Razorpay ? true : await loadRazorpay();
-
-  if (!isLoaded) {
-    throw new Error("Razorpay SDK failed to load. Are you online?");
+export const processPayment = async (options: {
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme?: {
+    color?: string;
+  };
+}): Promise<{
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}> => {
+  console.log("Razorpay: Starting processPayment for order:", options.order_id);
+  
+  const isLoaded = await loadRazorpay();
+  if (!isLoaded || !(window as any).Razorpay) {
+    throw new Error("Razorpay SDK failed to load. Please check your internet connection.");
   }
 
-  let razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-  try {
-    const configRes = await fetch("/api/payment/config");
-    if (configRes.ok) {
-      const configData = await configRes.json();
-      if (configData.keyId) {
-        razorpayKey = configData.keyId;
-        console.log("Razorpay: Loaded key dynamically from backend config:", razorpayKey);
-      }
-    }
-  } catch (err) {
-    console.warn("Razorpay: Failed to fetch key dynamically, using bundled env variable:", err);
-  }
-
+  const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
   if (!razorpayKey) {
-    console.log("Razorpay: VITE_RAZORPAY_KEY_ID was missing in import.meta.env, falling back to default key.");
-    razorpayKey = "rzp_live_RBDamiXJvSAFKW";
+    throw new Error("Razorpay Key ID missing from client environments. Please ensure VITE_RAZORPAY_KEY_ID is populated.");
   }
-
-  const isFallbackTest = options.order_id && options.order_id.startsWith("order_test_fallback_");
-  if (isFallbackTest && (!razorpayKey || !razorpayKey.startsWith("rzp_live_"))) {
-    console.log("Razorpay Live Mismatch detected: Safe dynamic recovery loading active Razorpay Test Key for full, real-time checkout simulation.");
-    razorpayKey = "rzp_test_SpvLFBDRrZonAb";
-  }
-
-  console.log("Razorpay: Key Status:", razorpayKey ? `Present (${razorpayKey.substring(0, 10)}...)` : "MISSING");
 
   return new Promise((resolve, reject) => {
-    console.log("Razorpay: Initializing modal...");
-    try {
-      const checkoutOptions: any = {
-        key: razorpayKey,
-        amount: options.amount,
-        currency: options.currency || "INR",
-        name: options.name || "PlayPro Toy Rental",
-        description: options.description || "Toy Rental Subscription",
-        prefill: options.prefill,
-        theme: options.theme || { color: "#FF7A59" },
-        handler: (response: any) => {
-          console.log("Razorpay: Payment Success", response);
-          resolve(response);
-        },
-        modal: {
-          ondismiss: () => {
-            console.log("Razorpay: User closed modal");
-            reject(new Error("Payment cancelled by user"));
-          },
-        },
-      };
-
-      // Only pass order_id if it is a real order (not empty, not mock, and not a test fallback)
-      if (options.order_id && !options.order_id.startsWith("order_mock_") && !options.order_id.startsWith("order_test_fallback_")) {
-        checkoutOptions.order_id = options.order_id;
-      } else {
-        console.log("Razorpay Client Fallback: Opening real-time standard Razorpay modal using Direct Client-Side Capture instead.");
+    const checkoutOptions: RazorpayOptions = {
+      key: razorpayKey,
+      amount: options.amount,
+      currency: options.currency,
+      name: options.name,
+      description: options.description,
+      order_id: options.order_id,
+      prefill: options.prefill,
+      theme: options.theme || { color: "#3B82F6" },
+      handler: (response) => {
+        console.log("Razorpay SDK: Payment succeeded!", response);
+        resolve(response);
+      },
+      modal: {
+        ondismiss: () => {
+          console.log("Razorpay SDK: Modal dismissed by user");
+          reject(new Error("Payment cancelled by user"));
+        }
       }
+    };
 
-      const rzp = new window.Razorpay(checkoutOptions);
-
-      console.log("Razorpay: Calling rzp.open()");
-      rzp.open();
-    } catch (e: any) {
-      console.error("Razorpay: Failed to open modal", e);
+    try {
+      const rzpCheck = new (window as any).Razorpay(checkoutOptions);
+      rzpCheck.on('payment.failed', function (response: any) {
+        console.error("Razorpay SDK: Payment transaction failed", response.error);
+        reject(new Error(`Payment failed: ${response.error.description || 'Unknown error occurred'}`));
+      });
+      rzpCheck.open();
+    } catch (e) {
+      console.error("Razorpay SDK init error:", e);
       reject(e);
     }
   });

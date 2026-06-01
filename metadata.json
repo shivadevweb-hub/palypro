@@ -2,5 +2,7 @@
   "name": "PlayPro",
   "description": "A modern toy rental subscription platform where kids can explore, play, and learn with high-quality toys.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

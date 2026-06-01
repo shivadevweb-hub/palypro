@@ -6,28 +6,21 @@ import { usePlay } from '../PlayContext';
 import { motion } from 'motion/react';
 import { processPayment } from '../lib/razorpay';
 import { safeFetch } from '../lib/safeFetch';
-import { PaymentErrorModal } from '../components/PaymentErrorModal';
-import { RazorpaySandboxModal } from '../components/RazorpaySandboxModal';
 
 export const CartPage = () => {
   const { selectedToys, currentPlan, user, clearSelection, updateUserAddress, placeOrder } = usePlay();
   const [isOrdered, setIsOrdered] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [errorModalOpen, setErrorModalOpen] = useState(false);
-  const [modalErrorMessage, setModalErrorMessage] = useState('');
   const [address, setAddress] = useState(user?.address || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [shippingName, setShippingName] = useState(user?.name || '');
   const [isUpdatingAddress, setIsUpdatingAddress] = useState(!user?.address);
-  const [sandboxModalOpen, setSandboxModalOpen] = useState(false);
-  const [sandboxParams, setSandboxParams] = useState<{
-    amount: number;
-    currency: string;
-    description: string;
-    resolve: (val: any) => void;
-    reject: (err: any) => void;
+  const [paymentError, setPaymentError] = useState<{
+    message: string;
+    isCancellation: boolean;
   } | null>(null);
+  
   const navigate = useNavigate();
 
   const depositAmount = 500;
@@ -36,32 +29,9 @@ export const CartPage = () => {
   const gstAmount = Math.round(planPrice * gstRate);
   const totalAmount = planPrice + gstAmount + depositAmount;
 
-  const simulatePaymentSuccess = async () => {
-    setIsProcessing(true);
-    setProcessingStatus('Simulating Success...');
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await placeOrder({
-        shippingName,
-        address,
-        phone,
-        razorpayOrderId: `sim_order_${Date.now()}`,
-        razorpayPaymentId: `sim_pay_${Date.now()}`
-      });
-      setIsOrdered(true);
-    } catch (err: any) {
-      console.error("Simulation placement error:", err);
-      setModalErrorMessage(err.message || "Simulation failed to submit your order.");
-      setErrorModalOpen(true);
-    } finally {
-      setIsProcessing(false);
-      setProcessingStatus('');
-    }
-  };
-
   const handlePayment = async () => {
     if (!user) {
-      alert("Please sign in to continue"); // Safe fallback for standard text-alert, doesn't freeze
+      alert("Please sign in to continue");
       return;
     }
 
@@ -71,7 +41,9 @@ export const CartPage = () => {
       return;
     }
 
-    // Save address if it changed or was empty (non-blocking)
+    setPaymentError(null);
+
+    // Save address if it changed or was empty
     if (address !== user.address || phone !== user.phone || shippingName !== user.name) {
       try {
         await updateUserAddress(shippingName, address, phone);
@@ -81,99 +53,75 @@ export const CartPage = () => {
     }
 
     setIsProcessing(true);
-    setProcessingStatus('Creating Secure Order...');
+    setProcessingStatus('Initiating Secure Order...');
 
     try {
-      console.log("Initiating payment for amount:", totalAmount);
+      console.log("Placing real-time merchant order of amount:", totalAmount);
       const order = await safeFetch("/api/payment/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: totalAmount,
           currency: "INR",
-          receipt: `order_${Date.now()}_${user.id.slice(0, 5)}`
-        }),
+          receipt: `rcpt_${Date.now()}_${user.id.slice(0, 5)}`
+        })
       });
 
-      console.log("Razorpay Order Created:", order.id);
-      
-      setProcessingStatus('Waiting for Payment...');
-
-      let paymentResponse: any;
-      
-      try {
-        console.log("Attempting standard Razorpay dynamic checkout...");
-        paymentResponse = await processPayment({
-          amount: order.amount,
-          currency: order.currency,
-          name: "PlayPro Toy Rental",
-          description: `${currentPlan?.name} Subscription`,
-          order_id: order.id,
-          prefill: {
-            name: shippingName || user.name,
-            email: user.email,
-            contact: phone || user.phone || ""
-          },
-          theme: { color: "#FF7A59" }
-        });
-      } catch (err: any) {
-        if (err.message && err.message.includes("cancelled")) {
-          throw err;
-        }
-        console.warn("Standard Razorpay modal failed to initialize/open. Opening seamless interactive sandbox checkout helper instead:", err);
-        paymentResponse = await new Promise((resolve, reject) => {
-          setSandboxParams({
-            amount: order.amount,
-            currency: order.currency,
-            description: `${currentPlan?.name} Subscription`,
-            resolve,
-            reject
-          });
-          setSandboxModalOpen(true);
-        });
+      if (!order || !order.id) {
+        throw new Error("Invalid order format received from the merchant gateway.");
       }
 
-      console.log("Payment Successful:", paymentResponse.razorpay_payment_id);
-      setProcessingStatus('Verifying Secure Signature...');
+      setProcessingStatus('Waiting for Safe Payment...');
+      const paymentResponse = await processPayment({
+        amount: order.amount,
+        currency: order.currency,
+        name: "PlayPro Toy Rental",
+        description: `${currentPlan?.name} Subscription Box`,
+        order_id: order.id,
+        prefill: {
+          name: shippingName || user.name,
+          email: user.email,
+          contact: phone || user.phone || ""
+        },
+        theme: { color: "#FF7A59" }
+      });
 
-      const verifyResponse = await safeFetch("/api/payment/verify", {
+      setProcessingStatus('Verifying Signature...');
+      const verification = await safeFetch("/api/payment/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          razorpay_order_id: paymentResponse.razorpay_order_id || order.id,
+          razorpay_order_id: paymentResponse.razorpay_order_id,
           razorpay_payment_id: paymentResponse.razorpay_payment_id,
           razorpay_signature: paymentResponse.razorpay_signature
         })
       });
 
-      if (!verifyResponse || !verifyResponse.verified) {
-        throw new Error("Payment signature verification failed. Transaction was not authenticated secure by our server.");
+      if (!verification || !verification.verified) {
+        throw new Error("Cryptographic signature check failed. Could not verify transaction authenticity.");
       }
 
-      console.log("✅ Payment Verified Successfully!");
-      setProcessingStatus('Finalizing Your Box...');
-
+      setProcessingStatus('Packing selection...');
+      console.log("Placing secure order in verified backend database");
       await placeOrder({
         shippingName,
         address,
         phone,
-        razorpayOrderId: paymentResponse.razorpay_order_id || order.id,
+        razorpayOrderId: paymentResponse.razorpay_order_id,
         razorpayPaymentId: paymentResponse.razorpay_payment_id,
-        razorpaySignature: paymentResponse.razorpay_signature || ""
+        razorpaySignature: paymentResponse.razorpay_signature
       });
       
       setIsOrdered(true);
     } catch (error: any) {
-      console.error("Payment/Order Error:", error);
-      
-      let errorMessage = error.message || "An unexpected error occurred during payment.";
-      
-      if (error.message === "Payment cancelled by user") {
-        // No alert/modal for cancellation, just reset
-      } else {
-        setModalErrorMessage(errorMessage);
-        setErrorModalOpen(true);
-      }
+      console.error("Payment Order Process error:", error);
+      const isCancellation = error.message === "Payment cancelled by user" || error.message?.includes("cancelled");
+      setPaymentError({
+        message: isCancellation 
+          ? "Payment was cancelled or dismissed. Please try again when you are ready."
+          : (error.message || "An unexpected error occurred during payment. Please check your config keys and try again."),
+        isCancellation
+      });
     } finally {
       setIsProcessing(false);
       setProcessingStatus('');
@@ -430,6 +378,19 @@ export const CartPage = () => {
                     </div>
                   </div>
 
+                  {paymentError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-8 p-6 bg-white/5 border border-white/10 rounded-3xl text-sm"
+                    >
+                      <div className="flex items-start space-x-3 text-accent">
+                        <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                        <span className="font-bold tracking-tight text-white/90 leading-normal">{paymentError.message}</span>
+                      </div>
+                    </motion.div>
+                  )}
+
                   <button
                     onClick={handlePayment}
                     disabled={selectedToys.length === 0 || isProcessing}
@@ -468,53 +429,6 @@ export const CartPage = () => {
         </div>
       </div>
       
-      <PaymentErrorModal
-        isOpen={errorModalOpen}
-        onClose={() => setErrorModalOpen(false)}
-        errorMessage={modalErrorMessage}
-        onSimulate={simulatePaymentSuccess}
-        title="Payment Authorization Required"
-      />
-
-      {sandboxParams && (
-        <RazorpaySandboxModal
-          isOpen={sandboxModalOpen}
-          amount={sandboxParams.amount}
-          currency={sandboxParams.currency}
-          description={sandboxParams.description}
-          prefill={{
-            name: shippingName || user?.name,
-            email: user?.email,
-            contact: phone || user?.phone || ""
-          }}
-          onSuccess={(data) => {
-            setSandboxModalOpen(false);
-            sandboxParams.resolve(data);
-          }}
-          onFailure={(err) => {
-            setSandboxModalOpen(false);
-            sandboxParams.reject(new Error(err));
-          }}
-          onClose={() => setSandboxModalOpen(false)}
-        />
-      )}
-
-      {/* Floating Rescue Reset Button for Production Safety */}
-      {isProcessing && (
-        <button
-          onClick={() => {
-            console.warn("User triggered payment safety rescue: unlocking UI and purging hanging Razorpay layers.");
-            setIsProcessing(false);
-            setProcessingStatus('');
-            document.querySelectorAll('.razorpay-container').forEach(el => el.remove());
-          }}
-          className="fixed bottom-6 right-6 z-[2147483647] flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-black px-6 py-4 rounded-xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider border border-white/10 cursor-pointer"
-          id="payment-rescue-btn"
-        >
-          <AlertCircle size={16} />
-          <span>Payment Hanging? Reset Page</span>
-        </button>
-      )}
     </div>
   );
 };

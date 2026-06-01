@@ -356,64 +356,14 @@ export const PlayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // 1. Create order on backend
-      const order = await safeFetch("/api/payment/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: plan.price,
-          currency: "INR",
-          receipt: `plan_${plan.id}_${user.id}_${Date.now()}`
-        })
+      console.log(`Activating subscription plan for "${plan.name}" (price ₹${plan.price})`);
+      const profileRef = doc(db, 'users', user.id);
+      await updateDoc(profileRef, { 
+        currentPlanId: plan.id, 
+        selectedToyIds: [],
+        updatedAt: new Date().toISOString()
       });
-
-      const isFallback = order.id && order.id.startsWith("order_test_fallback_");
-      if (isFallback) {
-        console.log("Credentials mismatched on backend. Propagating checkout fallback payload signal.");
-        throw new Error(`fallback_sandbox_payment:${JSON.stringify(order)}`);
-      }
-
-      // 2. Trigger Razorpay Checkout
-      const { processPayment } = await import("./lib/razorpay");
-      
-      let paymentResponse: any;
-      try {
-        paymentResponse = await processPayment({
-          amount: order.amount,
-          currency: order.currency,
-          order_id: order.id,
-          name: "PlayPro Subscription",
-          description: `Subscription to ${plan.name} Plan`,
-          prefill: {
-            name: user.name,
-            email: user.email,
-            contact: user.phone || ""
-          },
-          theme: {
-            color: "#FF4500" // Primary color
-          }
-        });
-      } catch (err: any) {
-        if (err.message && err.message.includes("cancelled")) {
-          throw err;
-        }
-        console.warn("Standard Razorpay process failed in PlayContext, forwarding sandbox fallback.");
-        throw new Error(`fallback_sandbox_payment:${JSON.stringify(order)}`);
-      }
-
-      // 3. Update profile if success
-      if (paymentResponse.razorpay_payment_id) {
-        const profileRef = doc(db, 'users', user.id);
-        await updateDoc(profileRef, { 
-          currentPlanId: plan.id, 
-          selectedToyIds: [],
-          lastPaymentId: paymentResponse.razorpay_payment_id,
-          lastOrderId: paymentResponse.razorpay_order_id,
-          updatedAt: new Date().toISOString()
-        });
-        
-        console.log("Plan updated successfully after payment.");
-      }
+      console.log("Plan updated successfully via direct activation.");
     } catch (error: any) {
       console.error("Purchase failed:", error);
       throw error;
